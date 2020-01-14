@@ -32,7 +32,7 @@ def load_vrps(file_path):
     result_vrps = {}
     with open(file_path) as f:
         reader = csv.reader(f)
-        for row in reader:
+        for row in tqdm(reader):
             asn = int(row[0][2:])  # ASNは頭に"AS"とついてるのでそれを除外している
             prefix = IPSet([row[1]])
             if not asn in result_vrps:
@@ -47,16 +47,16 @@ def load_rib_child(csv_row):
     result_rib = {}
     for row in tqdm(csv_row):
         try:
-            prefix = IPSet([row[0]])
+            prefix = row[0]
             asn = int(row[1])
         except:
             logger.debug("IndexError")
             continue
         if not asn in result_rib:
-            result_rib[asn] = IPSet([])
+            result_rib[asn] = []
 
         # 1つのASが複数のIPアドレスを持つ場合がある...?
-        result_rib[asn] = result_rib[asn] | prefix
+        result_rib[asn].append(prefix)
 
     return result_rib
 
@@ -107,15 +107,24 @@ def is_valid(vrps, rib, target_asn):
         logger.debug("ASN doesn't exist in RIB")
         return False
 
-    return rib[target_asn].issubset(vrps[target_asn])
+    return IPSet(rib[target_asn]).issubset(vrps[target_asn])
 
 
 def main():
+    dummy_vrps = load_vrps("/Users/user1/temp/vrps.csv")
+    logger.debug("finish load vrps")
+    dummy_rib = load_rib("/Users/user1/temp/ip-as.list")
+    logger.debug("finish load rib")
+
     all_target_asns = dummy_vrps.keys()
     logger.info("all_asn_in_VRPs {}".format(len(all_target_asns)))
 
+    count = 0
     for asn in all_target_asns:
         print( '{} {}'.format(str(asn), is_valid(dummy_vrps, dummy_rib, asn)) )
+
+        if count > 10: break
+        count += 1
 
 
 if __name__ == '__main__':
