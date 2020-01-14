@@ -74,7 +74,7 @@ def load_rib_child(csv_row):
         try:
             prefix = row[0]
             asn = int(row[1])
-            logger.debug("ASN: {}".format(asn))
+            # logger.debug("ASN: {}".format(asn))
         except:
             logger.debug("IndexError")
             continue
@@ -133,6 +133,10 @@ def is_valid(vrps, rib, target_asn):
     if not target_asn in rib:
         logger.debug("ASN doesn't exist in RIB")
         return False
+    valid_flag = IPSet(rib[target_asn]).issubset(vrps[target_asn])
+    if not valid_flag:
+        logger.debug("VRPS IP: {}   ".format(vrps[target_asn]) )
+        logger.debug("RIB IP : {}".format(IPSet(rib[target_asn])))
 
     return IPSet(rib[target_asn]).issubset(vrps[target_asn])
 
@@ -140,18 +144,18 @@ def is_valid(vrps, rib, target_asn):
 def main():
     dummy_vrps = load_vrps("/Users/user1/temp/vrps.csv")
     logger.debug("finish load vrps")
-    dummy_rib = load_rib("/Users/user1/temp/ip-as.list")
+    dummy_rib = load_rib("/Users/user1/temp/ip-as_rib.list")
     logger.debug("finish load rib")
 
     all_target_asns = dummy_vrps.keys()
     logger.info("all_asn_in_VRPs {}".format(len(all_target_asns)))
-    logger.info("all_asn_in_RIB {}".format(len(dummy_rib.keys())))
+    logger.info("all_asn_in_RIB  {}".format(len(dummy_rib.keys())))
 
     count = 0
     for asn in all_target_asns:
         print( '{} {}'.format(str(asn), is_valid(dummy_vrps, dummy_rib, asn)) )
 
-        if count > 10: break
+        if count > 10000: break
         count += 1
 
 
