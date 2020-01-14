@@ -27,19 +27,44 @@ dummy_rib = {
         6666: IPSet(['16.0.4.0/8']),
     }
 
+def divide_list_equally(target_list, divide_num):
+    n = math.ceil(len(target_list) / divide_num)
+    divided_list = [target_list[idx: min(idx + n, len(target_list))] for idx in range(0, len(target_list), n)]
+    return divided_list
+
+def load_vrps_child(csv_row):
+    result_vrps = {}
+    for row in tqdm(csv_row):
+        asn = int(row[0][2:])  # ASNは頭に"AS"とついてるのでそれを除外している
+        prefix = IPSet([row[1]])
+        if not asn in result_vrps:
+            result_vrps[asn] = IPSet([])
+
+        # 1つのASが複数のIPアドレスを持つ場合がある...?
+        result_vrps[asn] = result_vrps[asn] | prefix
+
+    logger.debug("load vrps work finishied. work len is {}".format(len(result_vrps)))
+    return result_vrps
+
 # routinatorの出力したVRPS一覧はCSVになってるので、それを読み込む
 def load_vrps(file_path):
     result_vrps = {}
     with open(file_path) as f:
         reader = csv.reader(f)
-        for row in tqdm(reader):
-            asn = int(row[0][2:])  # ASNは頭に"AS"とついてるのでそれを除外している
-            prefix = IPSet([row[1]])
-            if not asn in result_vrps:
-                result_vrps[asn] = IPSet([])
 
-            # 1つのASが複数のIPアドレスを持つ場合がある
-            result_vrps[asn] = result_vrps[asn] | prefix
+        num_multch_process = 10
+        p = Pool(num_multch_process)
+
+        all_row = []
+        for row in tqdm(reader):
+            all_row.append(row)
+
+        parted_all_row = divide_list_equally(all_row, num_multch_process)
+        logger.debug("list parted!! {}".format(len(parted_all_row)))
+
+        result = p.map(load_vrps_child, parted_all_row)
+        for res in result:
+            result_vrps.update(res)
     return result_vrps
 
 
@@ -49,6 +74,7 @@ def load_rib_child(csv_row):
         try:
             prefix = row[0]
             asn = int(row[1])
+            logger.debug("ASN: {}".format(asn))
         except:
             logger.debug("IndexError")
             continue
@@ -58,6 +84,7 @@ def load_rib_child(csv_row):
         # 1つのASが複数のIPアドレスを持つ場合がある...?
         result_rib[asn].append(prefix)
 
+    logger.debug("load rib work finishied. work len is {}".format(len(result_rib)))
     return result_rib
 
 def load_rib(file_path):
@@ -65,17 +92,17 @@ def load_rib(file_path):
     with open(file_path) as f:
         reader = csv.reader(f)
 
-        num_multh_process = 10
-        p = Pool(num_multh_process)
+        num_multch_process = 10
+        p = Pool(num_multch_process)
 
 
         all_row = []
         for row in tqdm(reader):
             all_row.append(row)
 
-        n = math.ceil(len(all_row) / num_multh_process)
-        parted_all_row = [all_row[idx: min(idx + n, n)] for idx in range(0,len(all_row), n)]
-        logger.debug("list parted!!")
+        parted_all_row = divide_list_equally(all_row, num_multch_process)
+        logger.debug("list parted!! {}".format(len(parted_all_row)))
+
         result = p.map(load_rib_child, parted_all_row)
         for res in result:
             result_rib.update(res)
@@ -118,6 +145,7 @@ def main():
 
     all_target_asns = dummy_vrps.keys()
     logger.info("all_asn_in_VRPs {}".format(len(all_target_asns)))
+    logger.info("all_asn_in_RIB {}".format(len(dummy_rib.keys())))
 
     count = 0
     for asn in all_target_asns:
