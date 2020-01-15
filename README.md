@@ -21,14 +21,14 @@ $ pip3 install netaddr pyfiglet tqdm
 標準では`/tmp`にデータを置きます   
 数分かかります
 ```
-$ python3 roamon_diff_controller get --all
+$ python3 roamon/roamon_diff_controller get --all
 ```
 #### 全ての情報のチェック
 VRPs(Verified ROA Payloads)の情報とRIB(実際の経路情報)を比較し、齟齬があるかどうかを調べます  
 Trueが正常でFalseが齟齬ありです  
 ロードに数分かかります
 ```
-$ python3 roamon_diff_controller check
+$ python3 roamon/roamon_diff_controller check
 
 139553 True
 136815 True
@@ -41,7 +41,7 @@ $ python3 roamon_diff_controller check
 例としてAS5745と63987について調べます  
 ロードに数分かかります
 ```
-$ python3 roamon_diff_controller check -asns 5745 63987
+$ python3 roamon/roamon_diff_controller check -asns 5745 63987
 
 5745 True
 63987 False
