@@ -3,7 +3,7 @@
 # 引数の処理はここを参考にした：https://qiita.com/oohira/items/308bbd33a77200a35a3d
 
 import argparse
-import roamon_diff
+import roamon_diff_checker
 import subprocess
 import os
 import logging
@@ -69,11 +69,11 @@ def command_get(args):
 # 検証サブコマンド　checkのとき呼ばれる関数
 def command_check(args):
     print(args)
-    data = roamon_diff.load_all_data(file_path_vrps, file_path_rib)
+    data = roamon_diff_checker.load_all_data(file_path_vrps, file_path_rib)
     if args.asns is None:
-        roamon_diff.check_all_asn_in_vrps(data["vrps"], data["rib"])
+        roamon_diff_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
     else:
-        roamon_diff.check_specified_asn(data["vrps"], data["rib"], args.asns)
+        roamon_diff_checker.check_specified_asn(data["vrps"], data["rib"], args.asns)
 
 
 def command_help(args):
