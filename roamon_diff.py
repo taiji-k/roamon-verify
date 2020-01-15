@@ -76,7 +76,7 @@ def load_rib_child(csv_row):
             asn = int(row[1])
             # logger.debug("ASN: {}".format(asn))
         except:
-            logger.debug("IndexError")
+            logger.debug("IndexError : {}".format(row))
             continue
         if not asn in result_rib:
             result_rib[asn] = []
@@ -108,19 +108,6 @@ def load_rib(file_path):
             result_rib.update(res)
 
 
-            # # logger.debug("asn: *{}*, prefix: *{}*".format(row[1], row[0]))
-            #
-            #
-            #
-            # prefix = IPSet([row[0]])
-            #
-            #
-            # asn = int(row[1])
-            # if not asn in result_rib:
-            #     result_rib[asn] = IPSet([])
-            #
-            # # 1つのASが複数のIPアドレスを持つ場合がある...?
-            # result_rib[asn] = result_rib[asn] | prefix
     return result_rib
 
 
@@ -134,29 +121,41 @@ def is_valid(vrps, rib, target_asn):
         logger.debug("ASN doesn't exist in RIB")
         return False
     valid_flag = IPSet(rib[target_asn]).issubset(vrps[target_asn])
-    if not valid_flag:
-        logger.debug("VRPS IP: {}   ".format(vrps[target_asn]) )
-        logger.debug("RIB IP : {}".format(IPSet(rib[target_asn])))
+    # if not valid_flag:
+    #     logger.debug("VRPS IP: {}   ".format(vrps[target_asn]) )
+    #     logger.debug("RIB IP : {}".format(IPSet(rib[target_asn])))
 
     return IPSet(rib[target_asn]).issubset(vrps[target_asn])
 
 
-def main():
-    dummy_vrps = load_vrps("/Users/user1/temp/vrps.csv")
+def load_all_data(file_path_vrps, file_path_rib):
+    dummy_vrps = load_vrps(file_path_vrps)
     logger.debug("finish load vrps")
-    dummy_rib = load_rib("/Users/user1/temp/ip-as_rib.list")
+    dummy_rib = load_rib(file_path_rib)
     logger.debug("finish load rib")
 
-    all_target_asns = dummy_vrps.keys()
-    logger.info("all_asn_in_VRPs {}".format(len(all_target_asns)))
+
+    logger.info("all_asn_in_VRPs {}".format(len(dummy_vrps.keys())))
     logger.info("all_asn_in_RIB  {}".format(len(dummy_rib.keys())))
+    return {"vrps": dummy_vrps, "rib": dummy_rib}
 
+
+def check_specified_asn(vrps, rib, target_asns):
     count = 0
-    for asn in all_target_asns:
-        print( '{} {}'.format(str(asn), is_valid(dummy_vrps, dummy_rib, asn)) )
+    for asn in tqdm(target_asns):
+        print('{} {}'.format(str(asn), is_valid(vrps, rib, asn)))
+        # if count > 10000: break
+        # count += 1
 
-        if count > 10000: break
-        count += 1
+
+def check_all_asn_in_vrps(dummy_vrps, dummy_rib):
+    all_target_asns = dummy_vrps.keys()
+    check_specified_asn(dummy_vrps, dummy_rib, all_target_asns)
+
+
+def main():
+    data = load_all_data("/Users/user1/temp/vrps.csv", "/Users/user1/temp/ip-as_rib.list")
+    check_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
 if __name__ == '__main__':
