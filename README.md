@@ -13,6 +13,8 @@ $ git clone https://github.com/taiji-k/roamon.git
 $ pip3 install netaddr pyfiglet tqdm
 ```
 
+他にDocker環境が必要です
+
 ### Quick start
 
 #### 全ての情報のフェッチ 
