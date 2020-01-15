@@ -8,7 +8,7 @@ ARG github-password="YOUR_PASSWORD"
 
 
 RUN apt update
-RUN apt install -y git python3 python3-pip
+RUN apt install -y git python3 python3-pip wget sudo
 RUN pip3 install netaddr pyfiglet tqdm
 RUN apt install -y \
     apt-transport-https \

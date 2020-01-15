@@ -3,18 +3,9 @@ ROAと実際の経路情報の齟齬を調べるツールです
 
 ## Usage
 ### Instllation
-#### Dockerを使う場合
-本リポジトリはプライベートのため、cloneにはログインが必要です
-`./docker/Dockerfile`にgithubのユーザ名とパスワードを入れるところがあるので書き換えておいてください
-
-あとは以下のコマンドで準備が整ったコンテナが起動します
-```
-$ sudo docker build -t roamon ./docker
-$ sudo docker run --rm -it roamon /bin/bash
->$ cd /roamon
-```
-
 #### ローカルにインストールする場合
+一番確実だと思います
+
 リポジトリのクローン
 ```
 $ git clone https://github.com/taiji-k/roamon.git
@@ -26,6 +17,37 @@ $ pip3 install netaddr pyfiglet tqdm
 ```
 
 他にDocker環境が必要です
+
+#### Vagrantを使う場合
+本リポジトリはプライベートのため、cloneにはログインが必要です  
+`./vagrant/Vagrantfile`の一番下の方にgithubアカウントのユーザ名とパスワードを入れるところがあるので書き換えてください
+
+あとPCのスペックに合わせて、仮想マシンに割り振るリソースを適当に増やしてください(Vagrantfileの真ん中くらいにあります)  
+低いスペックちゃんと動くかは確認してません...
+  
+あとは以下のコマンドを打てばok
+```
+$ cd vagrant
+$ vagrant up
+$ vagrant ssh
+>$ 
+```
+
+#### Dockerを使う場合
+Docker in Docker をやる必要があるため *後回し* にします
+
+~~本リポジトリはプライベートのため、cloneにはログインが必要です
+~~`./docker/Dockerfile`にgithubのユーザ名とパスワードを入れるところがあるので書き換えておいてください~~
+
+~~あとは以下のコマンドで準備が整ったコンテナが起動します~~
+
+```
+$ sudo docker build -t roamon ./docker
+$ sudo docker run --rm -it roamon /bin/bash
+>$ cd /roamon
+```
+
+
 
 ### Quick start
 
