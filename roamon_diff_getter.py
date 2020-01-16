@@ -9,13 +9,14 @@ from pyfiglet import Figlet
 import requests
 import bs4
 import urllib.parse
+from urllib.parse import urlparse
 
 # ログ関係の設定 (適当)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-# 最新のRIBファイルをダウンロードするためのURLを得る
+# 最新のRIBファイルをダウンロードするためのURLを得る (pyasnに同じ機能あったからいまは使わない)
 def get_latest_rib_url():
     # 年月が名前となったディレクトリ一覧を、最終更新順に並べたページを取得
     payload = {"C": "M", "O": "D"} # 最終更新(MOD)で降順(DESC)に並び替え
@@ -43,19 +44,29 @@ def get_latest_rib_url():
     return latest_rib_download_url
 
 
-def fetch_rib_data(dir_path_data, file_path_rib):
-    # TODO: 最新のRIBファイルを自動で選んでダウンロードできるようにする。現在は固定値。
-    latest_rib_download_url = get_latest_rib_url()
-    # RIBファイルのダウンロード
-    subprocess.check_output(
-        "wget {} -P {}".format(latest_rib_download_url, dir_path_data),
-        shell=True)
-    # MRTフォーマットをパースし、PrefixとAS_PATHの列を取り出し、経路集約された部分を取り除いてOrigin ASを抜き出し、最終的に PrefixとOriginASがならぶCSVにする
-    subprocess.check_output(
-        "time bgpdump -Hm -t dump rib.20200114.0200.bz2 | cut -d \| -f6,7 | tr '\|' ' ' | sed s/\{.*\}// | awk '{print ($1),($NF)}' | tr ' ' ',' > " + file_path_rib,
-        shell=True)
-    logger.debug("finish fetch rib")
+def fetch_rib_data(dir_path_data, file_path_ipasndb):
+    # pyasnの機能で最新のRIBファイルをRouteViewからとってくる
+    download_output = subprocess.check_output(
+        "cd {} ; pyasn_util_download.py --latest".format(dir_path_data),
+        shell=True,
+        universal_newlines=True
+    )
 
+    #　ダウンロードしたファイル名を,pyasnのダウンロードスクリプトの出力から調べる
+    download_output_lines = download_output.split("\n")
+    logger.debug("downloader output: {}".format(download_output_lines))
+    download_url = download_output_lines[2].split()[1]
+    logger.debug("downloadurl: {}".format(download_url))
+    downloaded_file_name = os.path.basename(urlparse(download_url).path)
+    logger.debug("download file name: {}".format(downloaded_file_name))
+
+    downloaded_file_path = os.path.join(dir_path_data, downloaded_file_name)
+    logger.debug("downloaded: {}".format(downloaded_file_path))
+
+    # pyasnの機能でRIBファイルをパースしてpyasnが読める形式に変換する
+    download_output = subprocess.check_output(
+        "pyasn_util_convert.py --single {} {}".format(downloaded_file_path, file_path_ipasndb),
+        shell=True)
 
 def fetch_vrps_data(file_path_vrps):
     # 入手したTALを永続化する準備
