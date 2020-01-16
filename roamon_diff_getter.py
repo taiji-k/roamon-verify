@@ -45,6 +45,7 @@ def get_latest_rib_url():
 
 
 def fetch_rib_data(dir_path_data, file_path_ipasndb):
+    logger.debug("start fetch RIB data")
     # pyasnの機能で最新のRIBファイルをRouteViewからとってくる
     download_output = subprocess.check_output(
         "cd {} ; pyasn_util_download.py --latest".format(dir_path_data),
@@ -63,6 +64,7 @@ def fetch_rib_data(dir_path_data, file_path_ipasndb):
     downloaded_file_path = os.path.join(dir_path_data, downloaded_file_name)
     logger.debug("downloaded: {}".format(downloaded_file_path))
 
+    logger.debug("start parse RIB data")
     # pyasnの機能でRIBファイルをパースしてpyasnが読める形式に変換する
     download_output = subprocess.check_output(
         "pyasn_util_convert.py --single {} {}".format(downloaded_file_path, file_path_ipasndb),
