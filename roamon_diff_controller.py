@@ -14,9 +14,9 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # ファイルの保存先
-dir_path_data = "/tmp"
+dir_path_data = "/var/tmp"
 file_path_vrps = os.path.join(dir_path_data, "vrps.csv")
-file_path_rib = os.path.join(dir_path_data, "ip-as_rib.list")
+file_path_rib = os.path.join(dir_path_data, "asnip.dat")
 
 # ロゴの描画
 f = Figlet(font='slant')
