@@ -70,6 +70,16 @@ def fetch_rib_data(dir_path_data, file_path_ipasndb):
         "pyasn_util_convert.py --single {} {}".format(downloaded_file_path, file_path_ipasndb),
         shell=True)
 
+# めんどくさいからShellScriptワンライナーで対応することにしました
+# # VRPsのCSVから、pyasnが読み込める形式に変換する
+# def convert_vrps_csv_to_pyasn_dat(file_path_vrps_csv, file_path_vrps_pyasn_dat):
+#     with open(file_path_vrps_csv, "r") as f_csv:
+#         with open(file_path_vrps_pyasn_dat, "w") as f_dat:
+#             # 最初のコメント
+#             f_dat.writelines("; IP-ASN32-DAT file")
+#             f_dat.writelines(";")
+
+
 def fetch_vrps_data(file_path_vrps):
     # 入手したTALを永続化する準備
     subprocess.check_output(
@@ -84,9 +94,10 @@ nlnetlabs/routinator init -f --accept-arin-rpa",
     subprocess.check_output(
         "sudo docker run -d --rm --name routinator -v routinator-tals:/home/routinator/.rpki-cache/tals nlnetlabs/routinator",
         shell=True)
-    # routinatorでROAを取得 & 検証してVRPのリストを得る
+    # routinatorでROAを取得 & 検証してVRPのリストを得て、さらにpyasnが読み込める形式に直す(cutコマンド以降が整形部分)
+    # TODO: pyasnがASN 0を許容しないので、`grep -v 'AS0'`を入れてAS0のとこを消してる。将来的にはpyasnを改造してASN 0を読み込めるようにすべき...らしい
     subprocess.check_output(
-        "sudo docker exec -it routinator /bin/sh -c 'routinator vrps 2>/dev/null | tail -n +2' > " + file_path_vrps,
+        "sudo docker exec -it routinator /bin/sh -c 'routinator vrps 2>/dev/null | tail -n +2'  | grep -v 'AS0' |cut -d, -f1,2 | tr ',' ' ' | cut -c 3- | awk '{print $2 \"\\t\" $1}'    > " + file_path_vrps,
         shell=True)
     # routinatorのコンテナを止める(と同時に消える)
     subprocess.check_output(
