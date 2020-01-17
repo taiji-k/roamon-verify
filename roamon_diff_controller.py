@@ -60,7 +60,7 @@ parser = argparse.ArgumentParser(description='ROA - BGP Diff command !')
 subparsers = parser.add_subparsers()
 
 # get コマンドの parser を作成
-parser_add = subparsers.add_parser('get', help='see `get -h`')
+parser_add = subparsers.add_parser('get', help="see `get -h`. It's command to fetch data." )
 parser_add.add_argument('--all', action='store_true', help='specify retrieve type ALL (default)')
 parser_add.add_argument('--roa', action='store_true', help='specify retrieve type only ROA')
 parser_add.add_argument('--bgp', action='store_true', help='specify retrieve type only BGP')
@@ -68,7 +68,7 @@ parser_add.add_argument('--bgp', action='store_true', help='specify retrieve typ
 parser_add.set_defaults(handler=command_get)
 
 # check コマンドの parser を作成
-parser_commit = subparsers.add_parser('check', help='see `check -h`')
+parser_commit = subparsers.add_parser('check', help="see `get -h`. It's command to check route.")
 parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
 parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
 parser_commit.add_argument('--ips', nargs='*', help='specify target IPs (/32 only)')

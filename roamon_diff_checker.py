@@ -19,18 +19,6 @@ def divide_list_equally(target_list, divide_num):
     return divided_list
 
 
-# routinatorの出力したVRPS一覧(CSV)をpyasnが解釈可能な形にしてあるファイルを読み込むだけ
-def load_vrps(file_path):
-    asndb_vrps = pyasn.pyasn(file_path)
-    return asndb_vrps
-
-
-# RIBファイルをPyASNがパースしたファイルを読み込むってだけ
-def load_rib(file_path):
-    asndb_rib = pyasn.pyasn(file_path)
-    return asndb_rib
-
-
 # VRPsとRIBのデータと、ASNを1つ与えるとそのASの経路は正常かどうか見てくれる(True: 正常、 False: 食い違いがある(ROA登録アリ、経路広告なしは正常となる) )
 # 1.そもそもそのASから経路広告してなかったらTrue
 # 2.指定されたASから経路広告してたけど、そのASはROA登録してない場合True
@@ -55,10 +43,6 @@ def is_valid_vrp_specified_by_asn(vrps, rib, target_asn):
     # ROAに登録されてるプレフィックスは現実で広告されてるプレフィックスをカバーできてるか調べる
     # RIBのエントリのprefixは、必ずROA登録されてるprefixよりも小さいはず。(割り当て時より細分化して広告されることはあっても逆はないはず)
     valid_flag = IPSet(prefix_list_in_rib).issubset(IPSet(prefix_list_in_vrps))
-
-    # if not valid_flag:
-    #     logger.debug("VRPS IP: {}   ".format(vrps[target_asn]) )
-    #     logger.debug("RIB IP : {}".format(IPSet(rib[target_asn])))
 
     return valid_flag
 
@@ -95,16 +79,14 @@ def is_valid_vrp_specified_by_ip(vrps, rib, target_ip):
 
     return valid_flag
 
-# ファイルパスを与えるとVRPsとRIBのCSVファイルを読み込む
+# ファイルパスを与えるとVRPsとRIBのpyasn用のファイルを読み込む
 def load_all_data(file_path_vrps, file_path_rib):
-    dummy_vrps = load_vrps(file_path_vrps)
+    asndb_vrps = pyasn.pyasn(file_path_vrps)
     logger.debug("finish load vrps")
-    dummy_rib = load_rib(file_path_rib)
+    asndb_rib = pyasn.pyasn(file_path_rib)
     logger.debug("finish load rib")
 
-    # logger.info("all_asn_in_VRPs {}".format(len(dummy_vrps.keys())))
-    # logger.info("all_asn_in_RIB  {}".format(len(dummy_rib.keys())))
-    return {"vrps": dummy_vrps, "rib": dummy_rib}
+    return {"vrps": asndb_vrps, "rib": asndb_rib}
 
 
 # ASNのリストを指定して、RIBとVRPsの食い違いがないか調べる
