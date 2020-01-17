@@ -103,7 +103,10 @@ def check_specified_ips(vrps, rib, target_ips):
 
 # VRPsに出てくる全てのASNに対して、RIBとVRPsの食い違いがないか調べる
 def check_all_asn_in_vrps(vrps, rib):
-    all_target_asns = vrps.keys()
+    all_target_asns = set()
+    for node in vrps.radix.nodes():
+        all_target_asns.add(node.asn)
+
     check_specified_asns(vrps, rib, all_target_asns)
 
 
