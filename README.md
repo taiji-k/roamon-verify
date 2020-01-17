@@ -13,7 +13,7 @@ $ git clone https://github.com/taiji-k/roamon.git
 
 必要なパッケージのインストール
 ```
-$ pip3 install netaddr pyfiglet tqdm
+$ pip3 install netaddr pyfiglet tqdm requests beautifulsoup4 pyasn
 ```
 
 他にDocker環境が必要です
@@ -60,7 +60,6 @@ $ python3 roamon_diff_controller.py get --all
 #### 全ての情報のチェック
 VRPs(Verified ROA Payloads)の情報とRIB(実際の経路情報)を比較し、齟齬があるかどうかを調べます  
 Trueが正常でFalseが齟齬ありです  
-ロードに数分かかります
 ```
 $ python3 roamon_diff_controller.py check
 
@@ -73,10 +72,16 @@ $ python3 roamon_diff_controller.py check
 
 #### 特定のASだけチェック
 例としてAS5745と63987について調べます  
-ロードに数分かかります
 ```
 $ python3 roamon_diff_controller.py check -asns 5745 63987
 
 5745 True
 63987 False
+```
+
+#### 特定のIPアドレスだけチェック
+```
+$ python3 roamon_diff_controller.py check -ips 8.8.8.8
+
+8.8.8.8 False
 ```
