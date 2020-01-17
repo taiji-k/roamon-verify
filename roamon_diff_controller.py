@@ -37,10 +37,17 @@ def command_get(args):
 # 検証サブコマンド　checkのとき呼ばれる関数
 def command_check(args):
     data = roamon_diff_checker.load_all_data(file_path_vrps, file_path_rib)
-    if args.asns is None:
+
+    # オプション指定されてる場合はそれをやる
+    if args.asns is not None:
+        roamon_diff_checker.check_specified_asns(data["vrps"], data["rib"], args.asns)
+    if args.ips is not None:
+        roamon_diff_checker.check_specified_ips(data["vrps"], data["rib"], args.ips)
+
+    # なんのオプションも指定されてないとき
+    # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
+    if args.all_asns == True or (args.ips is None and args.asns is None):
         roamon_diff_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
-    else:
-        roamon_diff_checker.check_specified_asn(data["vrps"], data["rib"], args.asns)
 
 
 def command_help(args):
@@ -62,7 +69,9 @@ parser_add.set_defaults(handler=command_get)
 
 # check コマンドの parser を作成
 parser_commit = subparsers.add_parser('check', help='see `check -h`')
+parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
 parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
+parser_commit.add_argument('--ips', nargs='*', help='specify target IPs (/32 only)')
 parser_commit.set_defaults(handler=command_check)
 
 # help コマンドの parser を作成

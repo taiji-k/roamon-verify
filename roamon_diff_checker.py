@@ -67,7 +67,10 @@ def load_rib(file_path):
 
 
 # VRPsとRIBのデータと、ASNを1つ与えるとそのASの経路は正常かどうか見てくれる(True: 正常、 False: 食い違いがある(ROA登録アリ、経路広告なしは正常となる) )
-def is_valid(vrps, rib, target_asn):
+# 1.そもそもそのASから経路広告してなかったらTrue
+# 2.指定されたASから経路広告してたけど、そのASはROA登録してない場合True
+# 3.指定されたASが経路広告しててROA登録もしてたが、ROA登録していないprefixを経路広告してたらFalse
+def is_valid_vrp_specified_by_asn(vrps, rib, target_asn):
     # 与えられたASNがVRPsに存在するか調べる
     does_exist_in_vrps = target_asn in vrps
     if not does_exist_in_vrps:
@@ -93,6 +96,33 @@ def is_valid(vrps, rib, target_asn):
 
     return valid_flag
 
+# IPアドレス(/32)は正しくROA登録されてるかを調べる
+# 1.そもそも指定されたIPが経路広告されてなかったらTrue
+# 2.指定されたIPが経路広告されてたけど、広告してたASが1つもROA登録してない場合True
+# 3.指定されたIPが経路広告されててそのASが1つ以上ROA登録してたが、指定したIPをROA登録してなければFalse
+# TODO: ...つまりなんかズレたことやってるので要修正！RIBとVRPS、どちらにおいてもIPで検索するようにすべき
+def is_valid_vrp_specified_by_ip(vrps, rib, target_ip):
+    ip_lookup_result = rib.lookup(target_ip)
+
+    # asnが存在しない場合, (None, None)が帰ってくる。ある場合は(1234, '8.8.8.0/24')とか。
+    does_exist_in_rib = ip_lookup_result[0] is not None
+    if not does_exist_in_rib:
+        logger.debug("ASN doesn't exist in RIB")
+        # そもそもRIBにないASNは単に広告してないだかもしれないのでTrue
+        return True
+
+    target_asn = ip_lookup_result[0]
+    does_exist_in_vrps = target_asn in vrps
+    if not does_exist_in_vrps:
+        logger.debug("ASN doesn't exist in VRPs")
+        return True
+
+    # ROAに登録されてるプレフィックスは現実で広告されてるプレフィックスをカバーできてるか調べる
+    # RIBのエントリのprefixは、必ずROA登録されてるprefixよりも小さいはず。(割り当て時より細分化して広告されることはあっても逆はないはず)
+    prefix_list_in_rib = rib.get_as_prefixes(target_asn)
+    valid_flag = IPSet(prefix_list_in_rib).issubset(vrps[target_asn])
+
+    return valid_flag
 
 # ファイルパスを与えるとVRPsとRIBのCSVファイルを読み込む
 def load_all_data(file_path_vrps, file_path_rib):
@@ -107,18 +137,21 @@ def load_all_data(file_path_vrps, file_path_rib):
 
 
 # ASNのリストを指定して、RIBとVRPsの食い違いがないか調べる
-def check_specified_asn(vrps, rib, target_asns):
-    count = 0
+def check_specified_asns(vrps, rib, target_asns):
+    #count = 0
     for asn in tqdm(target_asns):
-        print('{} {}'.format(str(asn), is_valid(vrps, rib, asn)))
+        print('{} {}'.format(str(asn), is_valid_vrp_specified_by_asn(vrps, rib, asn)))
         # if count > 10000: break
         # count += 1
 
+def check_specified_ips(vrps, rib, target_ips):
+    for ip in tqdm(target_ips):
+        print('{} {}'.format(str(ip), is_valid_vrp_specified_by_asn(vrps, rib, ip)))
 
 # VRPsに出てくる全てのASNに対して、RIBとVRPsの食い違いがないか調べる
 def check_all_asn_in_vrps(vrps, rib):
     all_target_asns = vrps.keys()
-    check_specified_asn(vrps, rib, all_target_asns)
+    check_specified_asns(vrps, rib, all_target_asns)
 
 
 def main():
