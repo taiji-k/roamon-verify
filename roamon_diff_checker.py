@@ -113,7 +113,7 @@ def is_violated_asn(vrps, rib, target_asn):
             is_violate_flag = not is_roa_registered
 
         # TODO: プリントじゃなくてなんか返す形にしたほうがいい...
-        logger.info("{} {} {}".format(suspiciouses["prefix"], suspiciouses["asn"], is_violate_flag))
+        logger.info("{} {} {} {}".format(target_asn, suspiciouses["prefix"], suspiciouses["asn"], is_violate_flag))
 
 
 
