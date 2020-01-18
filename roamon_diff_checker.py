@@ -52,17 +52,18 @@ def is_valid_vrp_specified_by_asn(vrps, rib, target_asn):
 # 2.指定されたIPが経路広告されてたけど、広告してたASが1つもROA登録してない場合True
 # 3.指定されたIPが経路広告されててそのASが1つ以上ROA登録してたが、指定したIPをカバーするprefixをROA登録してなければFalse
 def is_valid_vrp_specified_by_ip(vrps, rib, target_ip):
-    ip_lookup_result_rib = rib.lookup(target_ip)
+    target_ip_parsed = ipaddress.ip_network(target_ip)
+    ip_lookup_result_rib = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
 
     # asnが存在しない場合, (None, None)が帰ってくる。ある場合は(1234, '8.8.8.0/24')とか。
-    does_exist_in_rib = ip_lookup_result_rib[0] is not None
+    does_exist_in_rib = ip_lookup_result_rib is not None
     if not does_exist_in_rib:
         logger.debug("ASN doesn't exist in RIB")
         # そもそもRIBにないASNは単に広告してないだかもしれないのでTrue
         return True
 
-    target_asn = ip_lookup_result_rib[0]
-    target_prefix = ip_lookup_result_rib[1]
+    target_asn = ip_lookup_result_rib.asn
+    target_prefix = ip_lookup_result_rib.prefix
 
     # ASNはVRPsにあるか調べる
     # TODO: pyasnのget_as_prefixes()はget_as_prefixes_effective()とどう違う？帰ってくるのがsetとlistという違いがあるが...
