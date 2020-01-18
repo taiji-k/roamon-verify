@@ -55,7 +55,7 @@ def is_valid_vrp_specified_by_ip(vrps, rib, target_ip):
     target_ip_parsed = ipaddress.ip_network(target_ip)
     ip_lookup_result_rib = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
 
-    # asnが存在しない場合, (None, None)が帰ってくる。ある場合は(1234, '8.8.8.0/24')とか。
+    # asnが存在しない場合, Noneがかえる
     does_exist_in_rib = ip_lookup_result_rib is not None
     if not does_exist_in_rib:
         logger.debug("ASN doesn't exist in RIB")
