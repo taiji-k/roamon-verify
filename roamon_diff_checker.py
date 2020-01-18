@@ -116,8 +116,35 @@ def is_violated_asn(vrps, rib, target_asn):
         logger.info("{} {} {} {}".format(target_asn, suspiciouses["prefix"], suspiciouses["asn"], is_violate_flag))
 
 
+# 指定されたIPアドレス(/32に限らない)を経路広告してたASと、それをROA登録したASが同じかどうか調べる
+def is_violated_ip(vrps, rib, target_ip):
+    # 指定されたIPアドレス(/32に限らない)にロンゲストマッチするprefixを広告してるASを探す
+    target_ip_parsed = ipaddress.ip_network(target_ip)
+    matched_in_rib = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
+    is_violated_flag = None
+    # 検索失敗時(指定IPは経路広告されていない)
+    if matched_in_rib is None:
+        logger.debug("This ip {} is not longest matched in RIB.".format(target_ip))
+        is_violated_flag = False
+        return is_violated_flag
 
+    route_advertising_asn = matched_in_rib.asn
 
+    # 指定されたIPアドレス(/32に限らない)にロンゲストマッチするprefixをROA登録してるASを調べる
+    matched_in_vrps = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
+    # ROA登録されてなかった場合、単にROA登録してないだけであって経路ハイジャックかどうか全くわからんのでFalse
+    if matched_in_vrps is None:
+        logger.debug("This ip {} is not longest matched in VRPs.".format(target_ip))
+        is_violated_flag = False
+        return is_violated_flag
+    route_registering_asn = matched_in_vrps.asn
+
+    # 経路広告してるASとROA登録したASが違うなら経路ハイジャックとしてる.
+    #  だけど、例えばROA登録を、AS hogeが/16で、AS fugaが/24でしていたとする。経路広告はAS hogeのみが行ってた場合、おそらく当事者たちでは合意が取れているにもかかわらず「経路ハイジャック！」として検知されてしまう (検索でヒットするのはAS fugaのほうだから、ROA登録したASと広告してるASが異なるという判断)
+    #  しかし、ROAを使ってOrigin ASを検証する場合、上のようなのは「OriginASが正当でない」として検出されるワケだから、別にいっか！ROAをちゃんと管理しないやつがわるい。
+    is_violated_flag = not (route_advertising_asn == route_registering_asn)
+
+    return is_violated_flag
 
 
 # ファイルパスを与えるとVRPsとRIBのpyasn用のファイルを読み込む
@@ -138,6 +165,7 @@ def check_specified_asns(vrps, rib, target_asns):
         # if count > 10000: break
         # count += 1
 
+
 def check_specified_ips(vrps, rib, target_ips):
     for ip in tqdm(target_ips):
         print('{} {}'.format(str(ip), is_valid_vrp_specified_by_ip(vrps, rib, ip)))
@@ -146,6 +174,13 @@ def check_specified_ips(vrps, rib, target_ips):
 def check_violation_specified_asns(vrps, rib, target_asns):
     for asn in tqdm(target_asns):
         is_violated_asn(vrps, rib, asn)
+
+
+# IPアドレス("8.8.8.0/24"とか"8.8.8.8"とか)を与えて、経路ハイジャック的なのを調べる
+def check_violation_specified_ips(vrps, rib, target_ips):
+    for ip in tqdm(target_ips):
+        print('{} {}'.format(str(ip), is_violated_ip(vrps, rib, ip)))
+
 
 
 # VRPsに出てくる全てのASNに対して、RIBとVRPsの食い違いがないか調べる
