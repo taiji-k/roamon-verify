@@ -7,6 +7,7 @@ from tqdm import tqdm
 from multiprocessing import Pool
 import math
 import pyasn
+import ipaddress
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -51,17 +52,18 @@ def is_valid_vrp_specified_by_asn(vrps, rib, target_asn):
 # 2.指定されたIPが経路広告されてたけど、広告してたASが1つもROA登録してない場合True
 # 3.指定されたIPが経路広告されててそのASが1つ以上ROA登録してたが、指定したIPをカバーするprefixをROA登録してなければFalse
 def is_valid_vrp_specified_by_ip(vrps, rib, target_ip):
-    ip_lookup_result_rib = rib.lookup(target_ip)
+    target_ip_parsed = ipaddress.ip_network(target_ip)
+    ip_lookup_result_rib = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
 
-    # asnが存在しない場合, (None, None)が帰ってくる。ある場合は(1234, '8.8.8.0/24')とか。
-    does_exist_in_rib = ip_lookup_result_rib[0] is not None
+    # asnが存在しない場合, Noneがかえる
+    does_exist_in_rib = ip_lookup_result_rib is not None
     if not does_exist_in_rib:
         logger.debug("ASN doesn't exist in RIB")
         # そもそもRIBにないASNは単に広告してないだかもしれないのでTrue
         return True
 
-    target_asn = ip_lookup_result_rib[0]
-    target_prefix = ip_lookup_result_rib[1]
+    target_asn = ip_lookup_result_rib.asn
+    target_prefix = ip_lookup_result_rib.prefix
 
     # ASNはVRPsにあるか調べる
     # TODO: pyasnのget_as_prefixes()はget_as_prefixes_effective()とどう違う？帰ってくるのがsetとlistという違いがあるが...
@@ -78,6 +80,73 @@ def is_valid_vrp_specified_by_ip(vrps, rib, target_ip):
     valid_flag = IPSet([target_prefix]).issubset(IPSet(prefix_list_in_vrps))
 
     return valid_flag
+
+
+# 指定されたASがROA登録したprefixが他のROA登録していないASに勝手に(同じかより小さいプレフィックスで)経路広告されていないか調べる
+def is_violated_asn(vrps, rib, target_asn):
+    #　指令されたASがROA登録したprefixを調べる
+    registered_prefixes_by_target_asn = vrps.get_as_prefixes(target_asn)
+
+    # 指令されたASがROA登録したprefixたちについて、それより小さい(経路選択時に勝っちゃう)prefixが経路広告されてないか調べる
+    longest_matched_prefixes_and_asn = []
+    for prefix in registered_prefixes_by_target_asn:
+        prefix_parsed = ipaddress.ip_network(prefix)
+        # logger.debug("HOGEHOGE! netaddr {} netpref {} org_pref {}".format(network_addr, network_prefix, prefix) )
+        matched = rib.radix.search_best(str(prefix_parsed.network_address), prefix_parsed.prefixlen)
+        # 検索失敗時はNoneが返る
+        if matched is not None:
+            longest_matched_prefixes_and_asn.append({"prefix":matched.prefix, "asn":matched.asn})
+
+    # 指定されたASがROA登録してたPrefixより、経路選択時に優先されちゃう(=プレフィックスが同じかより小さい)現実に広告されてた経路を広告してたASは、ROA登録してたのか確かめる
+    for suspiciouses in longest_matched_prefixes_and_asn:
+        registered_prefixes = vrps.get_as_prefixes( suspiciouses["asn"] )
+        is_violate_flag = None
+        # そのASがROA登録してない場合
+        if registered_prefixes is None:
+            logger.debug("longest_matched_prefix {} advertised by AS{} are not ROA registered.".format(suspiciouses["prefix"], suspiciouses["asn"]) )
+            # ROA登録してないだけで意図した正当な経路広告なのか、それとも経路ハイジャックなのかわからない...
+            # なので潜在的に経路ハイジャックですということでTrue
+            is_violate_flag = True
+        else:
+            # そのASがROA登録しててかつ、経路広告してるprefixがROA登録されてるprefixでちゃんとカバーされてるかどうか
+            # logger.debug("HOGEHOGE! prefix {} asn {}".format(suspiciouses["prefix"], suspiciouses["asn"]) )
+            is_roa_registered = IPSet( [suspiciouses["prefix"]] ).issubset(IPSet(vrps.get_as_prefixes( suspiciouses["asn"] )))
+            is_violate_flag = not is_roa_registered
+
+        # TODO: プリントじゃなくてなんか返す形にしたほうがいい...
+        logger.info("{} {} {} {}".format(target_asn, suspiciouses["prefix"], suspiciouses["asn"], is_violate_flag))
+
+
+# 指定されたIPアドレス(/32に限らない)を経路広告してたASと、それをROA登録したASが同じかどうか調べる
+def is_violated_ip(vrps, rib, target_ip):
+    # 指定されたIPアドレス(/32に限らない)にロンゲストマッチするprefixを広告してるASを探す
+    target_ip_parsed = ipaddress.ip_network(target_ip)
+    matched_in_rib = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
+    is_violated_flag = None
+    # 検索失敗時(指定IPは経路広告されていない)
+    if matched_in_rib is None:
+        logger.debug("This ip {} is not longest matched in RIB.".format(target_ip))
+        is_violated_flag = False
+        return is_violated_flag
+
+    route_advertising_asn = matched_in_rib.asn
+
+    # 指定されたIPアドレス(/32に限らない)にロンゲストマッチするprefixをROA登録してるASを調べる
+    matched_in_vrps = rib.radix.search_best(str(target_ip_parsed.network_address), target_ip_parsed.prefixlen)
+    # ROA登録されてなかった場合、単にROA登録してないだけであって経路ハイジャックかどうか全くわからんのでFalse
+    if matched_in_vrps is None:
+        logger.debug("This ip {} is not longest matched in VRPs.".format(target_ip))
+        is_violated_flag = False
+        return is_violated_flag
+    route_registering_asn = matched_in_vrps.asn
+
+    # 経路広告してるASとROA登録したASが違うなら経路ハイジャックとしてる.
+    #  だけど、例えばROA登録を、AS hogeが/16で、AS fugaが/24でしていたとする。経路広告はAS hogeのみが行ってた場合、おそらく当事者たちでは合意が取れているにもかかわらず「経路ハイジャック！」として検知されてしまう (検索でヒットするのはAS fugaのほうだから、ROA登録したASと広告してるASが異なるという判断)
+    #  しかし、ROAを使ってOrigin ASを検証する場合、上のようなのは「OriginASが正当でない」として検出されるワケだから、別にいっか！ROAをちゃんと管理しないやつがわるい。
+    is_violated_flag = not (route_advertising_asn == route_registering_asn)
+
+    return is_violated_flag
+
 
 # ファイルパスを与えるとVRPsとRIBのpyasn用のファイルを読み込む
 def load_all_data(file_path_vrps, file_path_rib):
@@ -97,9 +166,23 @@ def check_specified_asns(vrps, rib, target_asns):
         # if count > 10000: break
         # count += 1
 
+
 def check_specified_ips(vrps, rib, target_ips):
     for ip in tqdm(target_ips):
         print('{} {}'.format(str(ip), is_valid_vrp_specified_by_ip(vrps, rib, ip)))
+
+
+def check_violation_specified_asns(vrps, rib, target_asns):
+    for asn in tqdm(target_asns):
+        is_violated_asn(vrps, rib, asn)
+
+
+# IPアドレス("8.8.8.0/24"とか"8.8.8.8"とか)を与えて、経路ハイジャック的なのを調べる
+def check_violation_specified_ips(vrps, rib, target_ips):
+    for ip in tqdm(target_ips):
+        print('{} {}'.format(str(ip), is_violated_ip(vrps, rib, ip)))
+
+
 
 # VRPsに出てくる全てのASNに対して、RIBとVRPsの食い違いがないか調べる
 def check_all_asn_in_vrps(vrps, rib):
@@ -108,6 +191,14 @@ def check_all_asn_in_vrps(vrps, rib):
         all_target_asns.add(node.asn)
 
     check_specified_asns(vrps, rib, all_target_asns)
+
+
+def check_violation_all_asn_in_vrps(vrps, rib):
+    all_target_asns = set()
+    for node in vrps.radix.nodes():
+        all_target_asns.add(node.asn)
+
+    check_violation_specified_asns(vrps, rib, all_target_asns)
 
 
 def main():

@@ -50,6 +50,21 @@ def command_check(args):
         roamon_diff_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
+def command_check_violation(args):
+    data = roamon_diff_checker.load_all_data(file_path_vrps, file_path_rib)
+
+    # オプション指定されてる場合はそれをやる
+    if args.asns is not None:
+        roamon_diff_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asns)
+    if args.ips is not None:
+        roamon_diff_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ips)
+
+    # なんのオプションも指定されてないとき
+    # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
+    if args.all_asns == True or (args.ips is None and args.asns is None):
+        roamon_diff_checker.check_violation_all_asn_in_vrps(data["vrps"], data["rib"])
+
+
 def command_help(args):
     print(parser.parse_args([args.command, '--help']))
     # TODO: ヘルプをうまくやる
@@ -71,8 +86,15 @@ parser_add.set_defaults(handler=command_get)
 parser_commit = subparsers.add_parser('check', help="see `get -h`. It's command to check route.")
 parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
 parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
-parser_commit.add_argument('--ips', nargs='*', help='specify target IPs (/32 only)')
+parser_commit.add_argument('--ips', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
 parser_commit.set_defaults(handler=command_check)
+
+# check-violationコマンドのパーサ
+parser_commit = subparsers.add_parser('check-violation', help="see `get -h`. It's command to check route hijack.")
+parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
+parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
+parser_commit.add_argument('--ips', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
+parser_commit.set_defaults(handler=command_check_violation)
 
 # help コマンドの parser を作成
 parser_help = subparsers.add_parser('help', help='see `help -h`')
