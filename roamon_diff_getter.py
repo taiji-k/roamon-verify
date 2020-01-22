@@ -46,31 +46,34 @@ def get_latest_rib_url():
 
 def fetch_rib_data(dir_path_data, file_path_ipasndb):
     logger.debug("start fetch RIB data")
-    # pyasnの機能で最新のRIBファイルをRouteViewからとってくる
-    download_output = subprocess.check_output(
-        "cd {} ; pyasn_util_download.py --latest".format(dir_path_data),
-        shell=True,
-        universal_newlines=True
-    )
 
-    #　ダウンロードしたファイル名を,pyasnのダウンロードスクリプトの出力から調べる
-    download_output_lines = download_output.split("\n")
-    logger.debug("downloader output: {}".format(download_output_lines))
-    download_url = download_output_lines[2].split()[1]
+    # 最新のRIBファイルのダウンロードURLを得る
+    download_url = get_latest_rib_url()
     logger.debug("downloadurl: {}".format(download_url))
-    downloaded_file_name = os.path.basename(urlparse(download_url).path)
-    logger.debug("download file name: {}".format(downloaded_file_name))
+    download_file_name = os.path.basename(urlparse(download_url).path)
+    logger.debug("download file name: {}".format(download_file_name))
+    # 最新のRIBファイルをダウンロードした場合のあるべきファイルパスを得る
+    download_file_path = os.path.join(dir_path_data, download_file_name)
 
-    downloaded_file_path = os.path.join(dir_path_data, downloaded_file_name)
-    logger.debug("downloaded: {}".format(downloaded_file_path))
+    # TODO: 同名のファイルがあっても、それはダウンロード途中でキャンセルされた残骸かもしれない。ハッシュ値を見るべき(だが面倒なのでやってない)
+    # すでに同名のファイルがあるならダウンロードはスキップ
+    if os.path.exists(download_file_path):
+        logger.debug("latest RIB file are exists at {}! The download is canceled.".format(download_file_path))
+    else:
+        logger.debug("latest RIB file are NOT exists at {}! Downloading...".format(download_file_path))
+        subprocess.check_output(
+            "cd {} ; wget {}".format(dir_path_data, download_url),
+            shell=True,
+            universal_newlines=True
+        )
+        logger.debug("downloaded: {}".format(download_file_path))
 
     logger.debug("start parse RIB data")
     # pyasnの機能でRIBファイルをパースしてpyasnが読める形式に変換する
-    download_output = subprocess.check_output(
-        "pyasn_util_convert.py --single {} {}".format(downloaded_file_path, file_path_ipasndb),
+    subprocess.check_output("pyasn_util_convert.py --single {} {}".format(download_file_path, file_path_ipasndb),
         shell=True)
 
-# めんどくさいからShellScriptワンライナーで対応することにしました
+# ↓めんどくさいからShellScriptワンライナーで対応することにしました
 # # VRPsのCSVから、pyasnが読み込める形式に変換する
 # def convert_vrps_csv_to_pyasn_dat(file_path_vrps_csv, file_path_vrps_pyasn_dat):
 #     with open(file_path_vrps_csv, "r") as f_csv:
