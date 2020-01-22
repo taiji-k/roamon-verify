@@ -151,9 +151,9 @@ def is_violated_ip(vrps, rib, target_ip):
 # ファイルパスを与えるとVRPsとRIBのpyasn用のファイルを読み込む
 def load_all_data(file_path_vrps, file_path_rib):
     asndb_vrps = pyasn.pyasn(file_path_vrps)
-    logger.debug("finish load vrps")
+    logger.debug("finish load vrps from {}".format(file_path_vrps))
     asndb_rib = pyasn.pyasn(file_path_rib)
-    logger.debug("finish load rib")
+    logger.debug("finish load rib from {}".format(file_path_rib))
 
     return {"vrps": asndb_vrps, "rib": asndb_rib}
 
@@ -161,10 +161,14 @@ def load_all_data(file_path_vrps, file_path_rib):
 # ASNのリストを指定して、RIBとVRPsの食い違いがないか調べる
 def check_specified_asns(vrps, rib, target_asns):
     #count = 0
+    result = {}
     for asn in tqdm(target_asns):
-        print('{} {}'.format(str(asn), is_valid_vrp_specified_by_asn(vrps, rib, asn)))
+        is_valid =  is_valid_vrp_specified_by_asn(vrps, rib, asn)
+        print('{} {}'.format(str(asn),is_valid))
+        result[asn] = is_valid
         # if count > 10000: break
         # count += 1
+    return result
 
 
 def check_specified_ips(vrps, rib, target_ips):
@@ -190,7 +194,7 @@ def check_all_asn_in_vrps(vrps, rib):
     for node in vrps.radix.nodes():
         all_target_asns.add(node.asn)
 
-    check_specified_asns(vrps, rib, all_target_asns)
+    return check_specified_asns(vrps, rib, all_target_asns)
 
 
 def check_violation_all_asn_in_vrps(vrps, rib):

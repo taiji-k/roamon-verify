@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 import argparse
-import roamon_diff_checker
+# import roamon_diff_checker
 import subprocess
 import os
 import logging
