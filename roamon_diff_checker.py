@@ -2,9 +2,7 @@
 
 from netaddr import *
 import logging
-import csv
 from tqdm import tqdm
-from multiprocessing import Pool
 import math
 import pyasn
 import ipaddress
@@ -19,24 +17,6 @@ def divide_list_equally(target_list, divide_num):
     n = math.ceil(len(target_list) / divide_num)
     divided_list = [target_list[idx: min(idx + n, len(target_list))] for idx in range(0, len(target_list), n)]
     return divided_list
-
-
-# 与えられたASNが広告してたprefixを全部ROVする
-def rov_with_asn(vrps, rib, target_asn):
-    # 与えられたASNが広告してるprefixを調べる
-    prefix_list_in_rib = rib.get_as_prefixes(target_asn)
-
-    # 広告してなければここで終了
-    does_exist_in_rib = not (prefix_list_in_rib is None)
-    if not does_exist_in_rib:
-        logger.debug("ASN doesn't exist in RIB")
-        return {"": RovResult.NOT_ADVERTISED}
-
-    # 与えられたASNが広告してたprefixを全部ROVする
-    result_dict ={}
-    for prefix in prefix_list_in_rib:
-        result_dict[prefix] = rov(vrps, rib, prefix)
-    return result_dict
 
 
 # ROVの結果の列挙型
@@ -89,6 +69,24 @@ def rov(vrps, rib, target_ip):
         return RovResult.VALID
     else:
         return RovResult.INVALID
+
+
+# 与えられたASNが広告してたprefixを全部ROVする
+def rov_with_asn(vrps, rib, target_asn):
+    # 与えられたASNが広告してるprefixを調べる
+    prefix_list_in_rib = rib.get_as_prefixes(target_asn)
+
+    # 広告してなければここで終了
+    does_exist_in_rib = not (prefix_list_in_rib is None)
+    if not does_exist_in_rib:
+        logger.debug("ASN doesn't exist in RIB")
+        return {"": RovResult.NOT_ADVERTISED}
+
+    # 与えられたASNが広告してたprefixを全部ROVする
+    result_dict ={}
+    for prefix in prefix_list_in_rib:
+        result_dict[prefix] = rov(vrps, rib, prefix)
+    return result_dict
 
 
 # 指定されたASがROA登録したprefixが他のROA登録していないASに勝手に(同じかより小さいプレフィックスで)経路広告されていないか調べる
@@ -167,47 +165,31 @@ def load_all_data(file_path_vrps, file_path_rib):
 
     return {"vrps": asndb_vrps, "rib": asndb_rib}
 
-# def print_result_dict(res_dict):
-#
-#     for row_name, row in res_dict.item():
-#         print(row_name, end="\t")
-#         for column in row.values():
-#             print(column, end="\t")
 
-
-# ASNのリストを指定して、RIBとVRPsの食い違いがないか調べる
+# ASNのリストを渡し、そのASらが広告している全てのprefixに対してROVを行う
 def check_specified_asns(vrps, rib, target_asns):
     result = {}
     for asn in tqdm(target_asns):
         result[asn] = rov_with_asn(vrps, rib, asn)
         logger.debug(" restype: {} res:   {}".format(type(result[asn]), result[asn]))
 
-        # 処理が終わったらすぐプリントしたいのでここでやっちゃう
+        # 処理が進むにつれ結果がでてきてほしい(貯めて最後に一気に出るのはいや)のでここでプリントしてしまう
         for ip, rov_res in result[asn].items():
             print(asn, end="\t")
             print(ip, end="\t")
             print(rov_res)
-            # for column in row.values():
-            #     # TODO: さいごの列の後にタブが1個きちゃう
-            #     print(column, end="\t")
 
     return result
 
-
+# prefixのリストを渡し、全てについてROVをする
 def check_specified_ips(vrps, rib, target_ips):
     result = {}
     for ip in tqdm(target_ips):
-        result = rov(vrps, rib, ip)
+        result[ip] = rov(vrps, rib, ip)
 
+        # 処理が進むにつれ結果がでてきてほしいのでここでプリントしてしまう
         print(ip, end="\t")
-        print(result)
-
-        # # 処理が終わったらすぐプリントしたいのでここでやっちゃう
-        # for row in result[ip]:
-        #     print(ip, end="\t")
-        #     for column in row.values():
-        #         # TODO: さいごの列の後にタブが1個きちゃう
-        #         print(column, end="\t")
+        print(result[ip])
 
     return result
 
@@ -221,7 +203,6 @@ def check_violation_specified_asns(vrps, rib, target_asns):
 def check_violation_specified_ips(vrps, rib, target_ips):
     for ip in tqdm(target_ips):
         print('{} {}'.format(str(ip), is_violated_ip(vrps, rib, ip)))
-
 
 
 # VRPsに出てくる全てのASNに対して、RIBとVRPsの食い違いがないか調べる
