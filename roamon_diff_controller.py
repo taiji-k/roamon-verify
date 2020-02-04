@@ -8,15 +8,20 @@ import roamon_diff_getter
 import os
 import logging
 from pyfiglet import Figlet
+import configparser
 
 # ログ関係の設定 (適当)
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# コンフィグファイルのロード
+config = configparser.ConfigParser()
+config.read('config.ini')
+config_roamon_diff = config["roamon-diff"]
 # ファイルの保存先
-dir_path_data = "/var/tmp"
-file_path_vrps = os.path.join(dir_path_data, "asnip_vrps.dat")
-file_path_rib = os.path.join(dir_path_data, "asnip.dat")
+dir_path_data = config_roamon_diff["dir_path_data"]
+file_path_vrps = config_roamon_diff["file_path_vrps"]
+file_path_rib = config_roamon_diff["file_path_rib"]
 
 # ロゴの描画
 f = Figlet(font='slant')
