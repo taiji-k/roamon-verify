@@ -21,8 +21,7 @@ $ pip3 install netaddr pyfiglet tqdm pyasn beautifulsoup4 requests
 本リポジトリはプライベートのため、cloneにはログインが必要です  
 `./vagrant/Vagrantfile`の一番下の方にgithubアカウントのユーザ名とパスワードを入れるところがあるので書き換えてください
 
-あとPCのスペックに合わせて、仮想マシンに割り振るリソースを適当に増やしてください(Vagrantfileの真ん中くらいにあります)  
-低いスペックちゃんと動くかは確認してません...
+なんだか遅い場合は、あとPCのスペックに合わせて、仮想マシンに割り振るリソースを適当に増やしてください(Vagrantfileの真ん中くらいにあります)    
   
 あとは以下のコマンドを打てばok
 ```
@@ -46,7 +45,11 @@ $ sudo docker run --rm -it roamon /bin/bash
 >$ cd /roamon
 ```
 
-
+## Configuration
+`config.ini`でファイルの置き場所を設定します。
+* `dir_path_data`:ワーキングディレクトリ(ダウンロードなどをする場所)
+* `file_path_vrps`: VRPのデータ(pyasnが読み込める形式)
+* `file_path_rib`: BGPのデータ(pyasnが読み込める形式)
 
 ## Usage
 使い方一覧。  
@@ -54,8 +57,7 @@ $ sudo docker run --rm -it roamon /bin/bash
 Note: 何らかの理由で`sudo`を付ける場合は、`sudo env "PATH=$PATH" <your_command>`のようにPATHを渡さないと途中で失敗します。sudoはデフォルトではセキュリティ上の理由でPATHを引き継いでくれません。
 
 ### 全ての情報のフェッチ 
-最初にやらなくてはいけません  
-標準では`/tmp`にデータを置きます   
+最初にやらなくてはいけません   
 数分かかります
 ```
 $ python3 roamon_diff_controller.py get --all
