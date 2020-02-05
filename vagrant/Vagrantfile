@@ -85,6 +85,6 @@ Vagrant.configure("2") do |config|
     ########
     ## YOU SHOULD CHANGE HERE!
     ########
-    git clone $( echo https://USERNAME:PASSWORD@github.com/taiji-k/roamon.git )
+    git clone $( echo https://USERNAME:PASSWORD@github.com/taiji-k/roamon-verify.git )
   SHELL
 end

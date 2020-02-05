@@ -7,7 +7,7 @@ ROAと実際の経路情報の齟齬をROVにより調べるツールです
 
 リポジトリのクローン
 ```
-$ git clone https://github.com/taiji-k/roamon.git
+$ git clone https://github.com/taiji-k/roamon-verify.git
 ```
 
 必要なパッケージのインストール
