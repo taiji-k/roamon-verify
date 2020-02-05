@@ -3,8 +3,8 @@
 # 引数の処理はここを参考にした：https://qiita.com/oohira/items/308bbd33a77200a35a3d
 
 import argparse
-import roamon_diff_checker
-import roamon_diff_getter
+import roamon_verify_checker
+import roamon_verify_getter
 import os
 import logging
 from pyfiglet import Figlet
@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 # コンフィグファイルのロード
 config = configparser.ConfigParser()
 config.read('config.ini')
-config_roamon_diff = config["roamon-diff"]
+config_roamon_verify = config["roamon-diff"]
 # ファイルの保存先
-dir_path_data = config_roamon_diff["dir_path_data"]
-file_path_vrps = config_roamon_diff["file_path_vrps"]
-file_path_rib = config_roamon_diff["file_path_rib"]
+dir_path_data = config_roamon_verify["dir_path_data"]
+file_path_vrps = config_roamon_verify["file_path_vrps"]
+file_path_rib = config_roamon_verify["file_path_rib"]
 
 # ロゴの描画
 f = Figlet(font='slant')
@@ -32,42 +32,42 @@ print(f.renderText('roamon'))
 def command_get(args):
     # RIBのデータ取得
     if args.all or args.bgp:
-        roamon_diff_getter.fetch_rib_data(dir_path_data, file_path_rib)
+        roamon_verify_getter.fetch_rib_data(dir_path_data, file_path_rib)
 
     # VRPs (Verified ROA Payloads)の取得
     if args.all or args.roa:
-        roamon_diff_getter.fetch_vrps_data(file_path_vrps)
+        roamon_verify_getter.fetch_vrps_data(file_path_vrps)
 
 
 # 検証サブコマンド　checkのとき呼ばれる関数
 def command_check(args):
-    data = roamon_diff_checker.load_all_data(file_path_vrps, file_path_rib)
+    data = roamon_verify_checker.load_all_data(file_path_vrps, file_path_rib)
 
     # オプション指定されてる場合はそれをやる
     if args.asns is not None:
-        roamon_diff_checker.check_specified_asns(data["vrps"], data["rib"], args.asns)
+        roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asns)
     if args.ips is not None:
-        roamon_diff_checker.check_specified_ips(data["vrps"], data["rib"], args.ips)
+        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ips)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
     if args.all_asns == True or (args.ips is None and args.asns is None):
-        roamon_diff_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
+        roamon_verify_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
 def command_check_violation(args):
-    data = roamon_diff_checker.load_all_data(file_path_vrps, file_path_rib)
+    data = roamon_verify_checker.load_all_data(file_path_vrps, file_path_rib)
 
     # オプション指定されてる場合はそれをやる
     if args.asns is not None:
-        roamon_diff_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asns)
+        roamon_verify_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asns)
     if args.ips is not None:
-        roamon_diff_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ips)
+        roamon_verify_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ips)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
     if args.all_asns == True or (args.ips is None and args.asns is None):
-        roamon_diff_checker.check_violation_all_asn_in_vrps(data["vrps"], data["rib"])
+        roamon_verify_checker.check_violation_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
 def command_help(args):
