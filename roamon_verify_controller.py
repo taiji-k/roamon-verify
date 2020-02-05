@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # コンフィグファイルのロード
 config = configparser.ConfigParser()
 config.read('config.ini')
-config_roamon_verify = config["roamon-diff"]
+config_roamon_verify = config["roamon-verify"]
 # ファイルの保存先
 dir_path_data = config_roamon_verify["dir_path_data"]
 file_path_vrps = config_roamon_verify["file_path_vrps"]
