@@ -15,8 +15,6 @@ $ git clone https://github.com/taiji-k/roamon-verify.git
 $ pip3 install netaddr pyfiglet tqdm pyasn beautifulsoup4 requests
 ```
 
-他にDocker環境が必要です
-
 ### Vagrantを使う場合
 本リポジトリはプライベートのため、cloneにはログインが必要です  
 `./vagrant/Vagrantfile`の一番下の方にgithubアカウントのユーザ名とパスワードを入れるところがあるので書き換えてください
@@ -32,17 +30,15 @@ $ vagrant ssh
 ```
 
 ### Dockerを使う場合
-Docker in Docker をやる必要があるため *後回し* にします
+本リポジトリはプライベートのため、cloneにはログインが必要です  
+`./docker/Dockerfile`にgithubのユーザ名とパスワードを入れるところがあるので書き換えておいてください  
 
-~~本リポジトリはプライベートのため、cloneにはログインが必要です
-~~`./docker/Dockerfile`にgithubのユーザ名とパスワードを入れるところがあるので書き換えておいてください~~
-
-~~あとは以下のコマンドで準備が整ったコンテナが起動します~~
+あとは以下のコマンドで準備が整ったコンテナが起動します
 
 ```
 $ sudo docker build -t roamon ./docker
 $ sudo docker run --rm -it roamon /bin/bash
->$ cd /roamon
+>$ cd /roamon-verify
 ```
 
 ## Configuration
