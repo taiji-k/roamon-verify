@@ -84,6 +84,16 @@ def fetch_rib_data(dir_path_data, file_path_ipasndb):
 
 
 def fetch_vrps_data(file_path_vrps):
+    # routinatorでROAを取得 & 検証してVRPのリストを得て、さらにpyasnが読み込める形式に直す(cutコマンド以降が整形部分)
+    # TODO: pyasnがASN 0を許容しないので、`grep -v 'AS0'`を入れてAS0のとこを消してる。将来的にはpyasnを改造してASN 0を読み込めるようにすべき...らしい
+    subprocess.check_output(
+        "routinator vrps 2>/dev/null | tail -n +2  | grep -v 'AS0' |cut -d, -f1,2 | tr ',' ' ' | cut -c 3- | awk '{print $2 \"\\t\" $1}'    > " + file_path_vrps,
+        shell=True)
+    logger.debug("finish fetch vrps")
+
+
+# VRPを入手するのに、docker上でroutinatorを動かす版。前使ってた
+def fetch_vrps_data_with_docker(file_path_vrps):
     # 入手したTALを永続化する準備
     subprocess.check_output(
         "sudo docker volume create routinator-tals",
