@@ -1,5 +1,5 @@
-# roamon diff
-ROAと実際の経路情報の齟齬を調べるツールです
+# roamon verify
+ROAと実際の経路情報の齟齬をROVにより調べるツールです
 
 ## Instllation
 ### ローカルにインストールする場合
@@ -7,7 +7,7 @@ ROAと実際の経路情報の齟齬を調べるツールです
 
 リポジトリのクローン
 ```
-$ git clone https://github.com/taiji-k/roamon.git
+$ git clone https://github.com/taiji-k/roamon-verify.git
 ```
 
 必要なパッケージのインストール
@@ -60,7 +60,7 @@ Note: 何らかの理由で`sudo`を付ける場合は、`sudo env "PATH=$PATH" 
 最初にやらなくてはいけません   
 数分かかります
 ```
-$ python3 roamon_diff_controller.py get --all
+$ python3 roamon_verify_controller.py get --all
 ```
 ### ROA登録がちゃんとできているか調べる
 VRPs(Verified ROA Payloads)の情報とRIB(実際の経路情報)を比較し、齟齬があるかどうかをROV(Route Origin Validation)をして調べます。  
@@ -77,7 +77,7 @@ VRPs(Verified ROA Payloads)の情報とRIB(実際の経路情報)を比較し、
 デフォルトでは, VRPsに登場した(=現在有効なROA登録していた)全てのASについて調べます。  
 ASが広告していたprefix全てについてROVをしていきます。
 ```
-$ python3 roamon_diff_controller.py check
+$ python3 roamon_verify_controller.py check
 
 2200    192.93.148.0/24 INVALID
 2200    194.57.0.0/16   VALID
@@ -90,7 +90,7 @@ $ python3 roamon_diff_controller.py check
 指定されたASが広告していたprefixすべてについてROVしていきます。  
 例としてAS5745と63987について調べます。  
 ```
-$ python3 roamon_diff_controller.py check -asns 5745 63987
+$ python3 roamon_verify_controller.py check -asns 5745 63987
 
 5745     192.93.148.0/24 VALID
 63987    194.57.0.0/16   VALID
@@ -103,7 +103,7 @@ $ python3 roamon_diff_controller.py check -asns 5745 63987
 
 `194.57.0.0/16`を含むprefixはROA登録できていることがわかります。
 ```
-$ python3 roamon_diff_controller.py check -ips  194.57.0.0/16 192.93.148.0/24
+$ python3 roamon_verify_controller.py check -ips  194.57.0.0/16 192.93.148.0/24
 
 194.57.0.0/16   VALID
 192.93.148.0/24 INVALID
@@ -111,7 +111,7 @@ $ python3 roamon_diff_controller.py check -ips  194.57.0.0/16 192.93.148.0/24
 
 `194.57.0.0/16`より1bit大きい`194.56.0.0/15`は(広告されてないから)ROVに失敗します
 ```
-$ python3 roamon_diff_controller.py check -ips  194.57.0.0/20
+$ python3 roamon_verify_controller.py check -ips  194.57.0.0/20
 
 194.56.0.0/15   NOT_ADVERTISED
 ```
@@ -120,7 +120,7 @@ $ python3 roamon_diff_controller.py check -ips  194.57.0.0/20
 `194.57.0.0/16`より細かい`194.57.0.0/20`でも同じくROVに成功することがわかります。(`194.57.0.0/16`にロンゲストマッチするから)  
 (TODO: 指定されたprefixだけでなく, 経路広告されてる中でそれにロンゲストマッチしたprefix,この場合`194.57.0.0/16`も表示した方がいい？)
 ```
-$ python3 roamon_diff_controller.py check -ips  194.57.0.0/20
+$ python3 roamon_verify_controller.py check -ips  194.57.0.0/20
 
 194.57.0.0/20   VALID
 ```
@@ -141,7 +141,7 @@ ROAでOrigin ASの検証をしている組織でははじかれてしまうの�
 
 `調査したAS | 経路広告されてる中で、調査したASがROA登録してるprefixとロンゲストマッチしたprefix | 経路広告したAS ` 
 ```
-$ python3 roamon_diff_controller.py check-violation 
+$ python3 roamon_verify_controller.py check-violation 
 
 174 198.63.0.0/16 2914 False
 174 185.189.173.0/24 199727 True
@@ -155,7 +155,7 @@ $ python3 roamon_diff_controller.py check-violation
 AS番号を複数していできます。
 
 ```
-$ python3 roamon_diff_controller.py check-violation  --asns 174
+$ python3 roamon_verify_controller.py check-violation  --asns 174
 
 174 198.63.0.0/16 2914 False
 174 185.189.173.0/24 199727 True
@@ -167,9 +167,9 @@ $ python3 roamon_diff_controller.py check-violation  --asns 174
 
 #### IPアドレスの指定
 指定されたIPアドレスを経路広告していたASと、そのIPアドレスをROA登録していたASが同一かどうかを調べます
-(`python3 roamon_diff_controller.py check --ips`と似たようなもんだから必要ない？この辺よくわからなくなってきたので整理が必要...)
+(`python3 roamon_verify_controller.py check --ips`と似たようなもんだから必要ない？この辺よくわからなくなってきたので整理が必要...)
 ```
-$ python3 roamon_diff_controller.py check-violation --ips 203.0.113.0/24 203.0.113.5
+$ python3 roamon_verify_controller.py check-violation --ips 203.0.113.0/24 203.0.113.5
 
 203.0.113.0/24 False
 203.0.113.5 False
