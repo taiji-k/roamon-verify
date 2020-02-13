@@ -102,7 +102,7 @@ def rov(vrps, rib, specified_prefix):
     does_exist_in_rib = ip_lookup_result_rib is not None
     if not does_exist_in_rib:
         logger.debug("ASN doesn't exist in RIB")
-        return PrefixRovResultStruct(specified_prefix, "", "", RovResult.NOT_ADVERTISED)
+        return PrefixRovResultStruct(specified_prefix, None, None, RovResult.NOT_ADVERTISED)
 
     # ロンゲストマッチしたprefixと、それを広告してたASNを取り出す
     advertising_asn = ip_lookup_result_rib.asn
