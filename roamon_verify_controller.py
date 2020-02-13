@@ -47,7 +47,7 @@ def command_check(args):
     if args.asns is not None:
         roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asns)
     if args.ips is not None:
-        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ips)
+        roamon_verify_checker.check_specified_prefixes(data["vrps"], data["rib"], args.ips)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
@@ -62,7 +62,7 @@ def command_check_violation(args):
     if args.asns is not None:
         roamon_verify_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asns)
     if args.ips is not None:
-        roamon_verify_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ips)
+        roamon_verify_checker.check_violation_specified_prefixes(data["vrps"], data["rib"], args.ips)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
