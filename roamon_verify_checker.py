@@ -42,12 +42,16 @@ class PrefixRovResultStruct:
         self.rov_result = rov_result
 
     def __str__(self):
-        obj_to_dict = {"prefix":self.roved_prefix,
+        return str(self.to_dict())
+
+    def to_dict(self):
+        obj_to_dict = {"specified_prefix":self.roved_prefix,
                        "advertised_prefix":self.matched_advertised_prefix,
                        "advertising_asn":self.advertising_asn,
                        "rov_result":self.rov_result
                        }
-        return str(obj_to_dict)
+        return obj_to_dict
+
 
 # ASNを指定してのROVの結果。 ASが広告するすべてのprefixについてROVした結果が格納される
 class AsnRovResultStruct:
@@ -62,10 +66,19 @@ class AsnRovResultStruct:
         self.__does_have_rov_failed_prefix = None
 
     def __str__(self):
+        return str(self.to_dict())
+
+    def to_dict(self):
+        # AsnRovResultStructは, 指定されたASNが広告してたprefixの数の分だけPrefixRovResultStructを持つ。それをただのdictに変換する
+        rov_results_dict_converted = {}
+        if self.rov_results_dict is not None:
+            for prefix, rov_result_struct in self.rov_results_dict.items():
+                rov_results_dict_converted[prefix] = rov_result_struct.to_dict()
+
         obj_to_dict = {"asn":self.specified_asn,
-                       "rov_results_dict":self.rov_results_dict,
+                       "rov_results_dict":rov_results_dict_converted
                        }
-        return str(obj_to_dict)
+        return obj_to_dict
 
     # このASの広告するprefixたちでROVに失敗したものが1つでもないか調べる
     def does_have_rov_failed_prefix(self):
@@ -112,6 +125,7 @@ def rov(vrps, rib, specified_prefix):
     rov_result = RovResult.VALID if valid_flag else RovResult.INVALID
 
     result_struct = PrefixRovResultStruct(specified_prefix, matched_advertised_prefix, advertising_asn, rov_result)
+    #logger.debug("to_dict_test {}".format(result_struct.to_dict()))
     return result_struct
 
 
@@ -131,7 +145,9 @@ def rov_with_asn(vrps, rib, specified_asn):
     for prefix in prefix_list_in_rib:
         result_dict[prefix] = rov(vrps, rib, prefix)
 
+
     asn_rov_result_struct = AsnRovResultStruct(specified_asn, result_dict)
+    #logger.debug("to_dict_test {}".format(asn_rov_result_struct.to_dict()))
     return asn_rov_result_struct
 
 
