@@ -21,9 +21,9 @@ def divide_list_equally(target_list, divide_num):
 
 # ROVの結果の列挙型
 class RovResult(Enum):
-    VALID          = (0b0001, "VALID")
-    INVALID        = (0b0010, "INVALID")
-    NOT_FOUND      = (0b0100, "NOT_FOUND")
+    VALID = (0b0001, "VALID")
+    INVALID = (0b0010, "INVALID")
+    NOT_FOUND = (0b0100, "NOT_FOUND")
     NOT_ADVERTISED = (0b1000, "NOT_ADVERTISED")
 
     def __init__(self, id, text):
@@ -32,6 +32,7 @@ class RovResult(Enum):
 
     def __str__(self):
         return self.text
+
 
 # Prefixを指定してのROVの結果
 class PrefixRovResultStruct:
@@ -45,10 +46,10 @@ class PrefixRovResultStruct:
         return str(self.to_dict())
 
     def to_dict(self):
-        obj_to_dict = {"specified_prefix":self.roved_prefix,
-                       "advertised_prefix":self.matched_advertised_prefix,
-                       "advertising_asn":self.advertising_asn,
-                       "rov_result":self.rov_result
+        obj_to_dict = {"specified_prefix": self.roved_prefix,
+                       "advertised_prefix": self.matched_advertised_prefix,
+                       "advertising_asn": self.advertising_asn,
+                       "rov_result": self.rov_result
                        }
         return obj_to_dict
 
@@ -75,8 +76,8 @@ class AsnRovResultStruct:
             for prefix, rov_result_struct in self.rov_results_dict.items():
                 rov_results_dict_converted[prefix] = rov_result_struct.to_dict()
 
-        obj_to_dict = {"asn":self.specified_asn,
-                       "rov_results_dict":rov_results_dict_converted
+        obj_to_dict = {"asn": self.specified_asn,
+                       "rov_results_dict": rov_results_dict_converted
                        }
         return obj_to_dict
 
@@ -117,7 +118,7 @@ def rov(vrps, rib, specified_prefix):
         logger.debug("ASN doesn't exist in VRPs")
         return PrefixRovResultStruct(specified_prefix, matched_advertised_prefix, advertising_asn, RovResult.NOT_FOUND)
 
-    #logger.debug("target_prefix: {}".format(matched_advertised_prefix))
+    # logger.debug("target_prefix: {}".format(matched_advertised_prefix))
 
     # ROAに登録されてるプレフィックスは、BGP経路情報の上で、指定されたprefixにロンゲストマッチしたprefixをカバーできているか調べる
     # RIBのエントリのprefixは、必ずROA登録されてるprefixよりも小さいはず。(割り当て時より細分化して広告されることはあっても逆はないはず)
@@ -125,7 +126,7 @@ def rov(vrps, rib, specified_prefix):
     rov_result = RovResult.VALID if valid_flag else RovResult.INVALID
 
     result_struct = PrefixRovResultStruct(specified_prefix, matched_advertised_prefix, advertising_asn, rov_result)
-    #logger.debug("to_dict_test {}".format(result_struct.to_dict()))
+    # logger.debug("to_dict_test {}".format(result_struct.to_dict()))
     return result_struct
 
 
@@ -141,20 +142,19 @@ def rov_with_asn(vrps, rib, specified_asn):
         return AsnRovResultStruct(specified_asn, {})
 
     # 与えられたASNが広告してたprefixを全部ROVする
-    result_dict ={}
+    result_dict = {}
     for prefix in prefix_list_in_rib:
         result_dict[prefix] = rov(vrps, rib, prefix)
 
-
     asn_rov_result_struct = AsnRovResultStruct(specified_asn, result_dict)
-    #logger.debug("to_dict_test {}".format(asn_rov_result_struct.to_dict()))
+    # logger.debug("to_dict_test {}".format(asn_rov_result_struct.to_dict()))
     return asn_rov_result_struct
 
 
 # 指定されたASがROA登録したprefixが他のROA登録していないASに勝手に(同じかより小さいプレフィックスで)経路広告されていないか調べる
 # TODO: 検討して使わないなら消す
 def is_violated_asn(vrps, rib, specified_asn):
-    #　指令されたASがROA登録したprefixを調べる
+    # 　指令されたASがROA登録したprefixを調べる
     registered_prefixes_by_target_asn = vrps.get_as_prefixes(specified_asn)
 
     # 指令されたASがROA登録したprefixたちについて、それより小さい(経路選択時に勝っちゃう)prefixが経路広告されてないか調べる
@@ -165,22 +165,25 @@ def is_violated_asn(vrps, rib, specified_asn):
         matched = rib.radix.search_best(str(prefix_parsed.network_address), prefix_parsed.prefixlen)
         # 検索失敗時はNoneが返る
         if matched is not None:
-            longest_matched_prefixes_and_asn.append({"prefix":matched.prefix, "asn":matched.asn})
+            longest_matched_prefixes_and_asn.append({"prefix": matched.prefix, "asn": matched.asn})
 
     # 指定されたASがROA登録してたPrefixより、経路選択時に優先されちゃう(=プレフィックスが同じかより小さい)現実に広告されてた経路を広告してたASは、ROA登録してたのか確かめる
     for suspiciouses in longest_matched_prefixes_and_asn:
-        registered_prefixes = vrps.get_as_prefixes( suspiciouses["asn"] )
+        registered_prefixes = vrps.get_as_prefixes(suspiciouses["asn"])
         is_violate_flag = None
         # そのASがROA登録してない場合
         if registered_prefixes is None:
-            logger.debug("longest_matched_prefix {} advertised by AS{} are not ROA registered.".format(suspiciouses["prefix"], suspiciouses["asn"]) )
+            logger.debug(
+                "longest_matched_prefix {} advertised by AS{} are not ROA registered.".format(suspiciouses["prefix"],
+                                                                                              suspiciouses["asn"]))
             # ROA登録してないだけで意図した正当な経路広告なのか、それとも経路ハイジャックなのかわからない...
             # なので潜在的に経路ハイジャックですということでTrue
             is_violate_flag = True
         else:
             # そのASがROA登録しててかつ、経路広告してるprefixがROA登録されてるprefixでちゃんとカバーされてるかどうか
             # logger.debug("HOGEHOGE! prefix {} asn {}".format(suspiciouses["prefix"], suspiciouses["asn"]) )
-            is_roa_registered = IPSet( [suspiciouses["prefix"]] ).issubset(IPSet(vrps.get_as_prefixes( suspiciouses["asn"] )))
+            is_roa_registered = IPSet([suspiciouses["prefix"]]).issubset(
+                IPSet(vrps.get_as_prefixes(suspiciouses["asn"])))
             is_violate_flag = not is_roa_registered
 
         # TODO: プリントじゃなくてなんか返す形にしたほうがいい...
@@ -192,7 +195,8 @@ def is_violated_asn(vrps, rib, specified_asn):
 def is_violated_prefix(vrps, rib, specified_prefix):
     # 指定されたIPアドレス(/32に限らない)にロンゲストマッチするprefixを広告してるASを探す
     specified_prefix_parsed = ipaddress.ip_network(specified_prefix)
-    matched_in_rib = rib.radix.search_best(str(specified_prefix_parsed.network_address), specified_prefix_parsed.prefixlen)
+    matched_in_rib = rib.radix.search_best(str(specified_prefix_parsed.network_address),
+                                           specified_prefix_parsed.prefixlen)
     is_violated_flag = None
     # 検索失敗時(指定IPは経路広告されていない)
     if matched_in_rib is None:
@@ -203,7 +207,8 @@ def is_violated_prefix(vrps, rib, specified_prefix):
     route_advertising_asn = matched_in_rib.asn
 
     # 指定されたIPアドレス(/32に限らない)にロンゲストマッチするprefixをROA登録してるASを調べる
-    matched_in_vrps = rib.radix.search_best(str(specified_prefix_parsed.network_address), specified_prefix_parsed.prefixlen)
+    matched_in_vrps = rib.radix.search_best(str(specified_prefix_parsed.network_address),
+                                            specified_prefix_parsed.prefixlen)
     # ROA登録されてなかった場合、単にROA登録してないだけであって経路ハイジャックかどうか全くわからんのでFalse
     if matched_in_vrps is None:
         logger.debug("This ip {} is not longest matched in VRPs.".format(specified_prefix))
@@ -234,7 +239,7 @@ def check_specified_asns(vrps, rib, target_asns):
     asn_rov_result_struct_dict = {}
     for asn in tqdm(target_asns):
         asn_rov_result_struct = rov_with_asn(vrps, rib, asn)
-        logger.debug(" restype: {} res:   {}".format(type(asn_rov_result_struct), str(asn_rov_result_struct) ))
+        logger.debug(" restype: {} res:   {}".format(type(asn_rov_result_struct), str(asn_rov_result_struct)))
 
         # 処理が進むにつれ結果がでてきてほしい(貯めて最後に一気に出るのはいや)のでここでプリントしてしまう
         for prefix, rov_res in asn_rov_result_struct.rov_results_dict.items():
@@ -262,6 +267,7 @@ def check_specified_prefixes(vrps, rib, specified_prefixes):
 
     return result
 
+
 # TODO: 検討して使わないなら消す
 def check_violation_specified_asns(vrps, rib, target_asns):
     for asn in tqdm(target_asns):
@@ -283,12 +289,14 @@ def check_all_asn_in_vrps(vrps, rib):
 
     return check_specified_asns(vrps, rib, all_target_asns)
 
+
 def check_all_prefixes_in_vrps(vrps, rib):
     all_target_prefixes = set()
     for node in vrps.radix.nodes():
         all_target_prefixes.add(node.prefix)
 
     return check_specified_prefixes(vrps, rib, all_target_prefixes)
+
 
 # TODO: 検討して使わないなら消す
 def check_violation_all_asn_in_vrps(vrps, rib):

@@ -80,7 +80,7 @@ parser = argparse.ArgumentParser(description='ROA - BGP Diff command !')
 subparsers = parser.add_subparsers()
 
 # get コマンドの parser を作成
-parser_add = subparsers.add_parser('get', help="see `get -h`. It's command to fetch data." )
+parser_add = subparsers.add_parser('get', help="see `get -h`. It's command to fetch data.")
 parser_add.add_argument('--all', action='store_true', help='specify retrieve type ALL (default)')
 parser_add.add_argument('--roa', action='store_true', help='specify retrieve type only ROA')
 parser_add.add_argument('--bgp', action='store_true', help='specify retrieve type only BGP')
