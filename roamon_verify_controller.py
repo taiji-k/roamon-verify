@@ -76,7 +76,7 @@ def command_help(args):
 
 
 # コマンドラインパーサーを作成
-parser = argparse.ArgumentParser(description='ROA - BGP Diff command !')
+parser = argparse.ArgumentParser(description='ROA - BGP rov command !')
 subparsers = parser.add_subparsers()
 
 # get コマンドの parser を作成
@@ -87,18 +87,18 @@ parser_add.add_argument('--bgp', action='store_true', help='specify retrieve typ
 # parser_add.add_argument('-p', '--path', default="/tmp", help='specify data dirctory')
 parser_add.set_defaults(handler=command_get)
 
-# check コマンドの parser を作成
-parser_commit = subparsers.add_parser('check', help="see `get -h`. It's command to check route.")
-parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
-parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
-parser_commit.add_argument('--ips', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
+# rov コマンドの parser を作成
+parser_commit = subparsers.add_parser('rov', help="see `get -h`. It's command to check route.")
+parser_commit.add_argument('--all-asn', nargs='*', help='check ALL ASNs (default)')
+parser_commit.add_argument('--asn', nargs='*', help='specify target ASNs (default: ALL)')
+parser_commit.add_argument('--ip', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
 parser_commit.set_defaults(handler=command_check)
 
-# check-violationコマンドのパーサ
-parser_commit = subparsers.add_parser('check-violation', help="see `get -h`. It's command to check route hijack.")
-parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
-parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
-parser_commit.add_argument('--ips', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
+# only-invalidコマンドのパーサ
+parser_commit = subparsers.add_parser('only-invalid', help="see `get -h`. It's command to validate route origin.")
+parser_commit.add_argument('--all-asn', nargs='*', help='check ALL ASNs (default)')
+parser_commit.add_argument('--asn', nargs='*', help='specify target ASNs (default: ALL)')
+parser_commit.add_argument('--ip', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
 parser_commit.set_defaults(handler=command_check_violation)
 
 # help コマンドの parser を作成
