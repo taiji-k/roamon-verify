@@ -44,14 +44,14 @@ def command_check(args):
     data = roamon_verify_checker.load_all_data(file_path_vrps, file_path_rib)
 
     # オプション指定されてる場合はそれをやる
-    if args.asns is not None:
-        roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asns)
-    if args.ips is not None:
-        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ips)
+    if args.asn is not None:
+        roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asn)
+    if args.ip is not None:
+        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ip)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
-    if args.all_asns == True or (args.ips is None and args.asns is None):
+    if args.all_asn == True or (args.ip is None and args.asn is None):
         roamon_verify_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
@@ -59,14 +59,14 @@ def command_check_violation(args):
     data = roamon_verify_checker.load_all_data(file_path_vrps, file_path_rib)
 
     # オプション指定されてる場合はそれをやる
-    if args.asns is not None:
-        roamon_verify_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asns)
-    if args.ips is not None:
-        roamon_verify_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ips)
+    if args.asn is not None:
+        roamon_verify_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asn)
+    if args.ip is not None:
+        roamon_verify_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ip)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
-    if args.all_asns == True or (args.ips is None and args.asns is None):
+    if args.all_asn == True or (args.ip is None and args.asn is None):
         roamon_verify_checker.check_violation_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
