@@ -1,27 +1,31 @@
-# roamon verify
-ROAと実際の経路情報の齟齬をROVにより調べるツールです
+## Documentation
 
-## Instllation
-### ローカルにインストールする場合
-一番確実だと思います
+Roamon-verify is a command line tool to show ROV results from BGP routes.
+This tool uses routeviews archive as BGP routes and VRP (Validated ROA prefixes) from Routinator.
+Roamon-verify is developed and maintained by JPNIC young dev team.
 
-リポジトリのクローン
+## Installation
+
+### When putting into local directory
+
+To clone from repository:
 ```
 $ git clone https://github.com/taiji-k/roamon-verify.git
 ```
 
-必要なパッケージのインストール
+To install required packages:
 ```
 $ pip3 install netaddr pyfiglet tqdm pyasn beautifulsoup4 requests
 ```
 
-### Vagrantを使う場合
-本リポジトリはプライベートのため、cloneにはログインが必要です  
-`./vagrant/Vagrantfile`の一番下の方にgithubアカウントのユーザ名とパスワードを入れるところがあるので書き換えてください
+### When putting in Vagrant
 
-なんだか遅い場合は、あとPCのスペックに合わせて、仮想マシンに割り振るリソースを適当に増やしてください(Vagrantfileの真ん中くらいにあります)    
-  
-あとは以下のコマンドを打てばok
+To clone from repository:
+```
+$ git clone https://github.com/taiji-k/roamon-verify.git
+```
+
+To use in vagrant:
 ```
 $ cd vagrant
 $ vagrant up
@@ -29,11 +33,14 @@ $ vagrant ssh
 >$ 
 ```
 
-### Dockerを使う場合
-本リポジトリはプライベートのため、cloneにはログインが必要です  
-`./docker/Dockerfile`にgithubのユーザ名とパスワードを入れるところがあるので書き換えておいてください  
+When works slow, increase resources allocated into VM. The parameter is in the middle of Vagrantfile.
 
-あとは以下のコマンドで準備が整ったコンテナが起動します
+### When putting in Docker
+
+To clone from repository:
+```
+$ git clone https://github.com/taiji-k/roamon-verify.git
+```
 
 ```
 $ sudo docker build -t roamon ./docker
@@ -41,133 +48,77 @@ $ sudo docker run --rm -it roamon /bin/bash
 >$ cd /roamon-verify
 ```
 
-## Configuration
-`config.ini`でファイルの置き場所を設定します。
-* `dir_path_data`:ワーキングディレクトリ(ダウンロードなどをする場所)
-* `file_path_vrps`: VRPのデータ(pyasnが読み込める形式)
-* `file_path_rib`: BGPのデータ(pyasnが読み込める形式)
+### Configurations
+
+Specify a working directory and data directories in `config.ini`.
+
+* `dir_path_data`: working directory used for putting downloaded files.
+* `file_path_vrps`: VRP data (as pyasn readable format)
+* `file_path_rib`: BGP data (as pyasn readable format)
 
 ## Usage
-使い方一覧。  
 
-Note: 何らかの理由で`sudo`を付ける場合は、`sudo env "PATH=$PATH" <your_command>`のようにPATHを渡さないと途中で失敗します。sudoはデフォルトではセキュリティ上の理由でPATHを引き継いでくれません。
+Note: In case of using `sudo`, $PATH value should be specified like `sudo env "PATH=$PATH" <your_command>`, to avoid error during execution. sudo does not path $PATH value with security reason.
 
-### 全ての情報のフェッチ 
-最初にやらなくてはいけません   
-数分かかります
+### Fetch all data
+
+You need to do at first.
+It needs several minutes.
 ```
 $ python3 roamon_verify_controller.py get --all
 ```
-### ROA登録がちゃんとできているか調べる
-VRPs(Verified ROA Payloads)の情報とRIB(実際の経路情報)を比較し、齟齬があるかどうかをROV(Route Origin Validation)をして調べます。  
- 
-結果の見方は以下です。
-* 検証成功が `VALID`
-* 検証失敗(ROA登録されたものとは違うASがオリジンとして広告してた)は `INVALID`
-* ROA登録がそもそもなかったのは `NOT_FOUND`
-* そもそも経路広告がされてなかったものは `NOT_ADVERTISED`
 
+### VRPs and ROV
 
+By comparing VRPs (Verified ROA Payloads) with BGP routes, difference will be checked as ROV (Route Origin Validation).
 
-#### 全てのASについて調べる
-デフォルトでは, VRPsに登場した(=現在有効なROA登録していた)全てのASについて調べます。  
-ASが広告していたprefix全てについてROVをしていきます。
+To see results:
+* `VALID` means verified successfully.
+* `INVALID` means error (different AS from ROA announced).
+* `NOT_FOUND` means ROA is not created.
+* `NOT_ADVERTISED` means no BGP routes.
+
+### Verify all AS's prefix
+
+Announced prefixes by all AS in VRPs are 'ROV'ed by default.
+
 ```
-$ python3 roamon_verify_controller.py check
+$ python3 roamon_verify_controller.py show
 
-2200    192.93.148.0/24 INVALID
-2200    194.57.0.0/16   VALID
-2200    192.54.175.0/24 INVALID
-2200    156.28.0.0/16   INVALID
+64511    192.168.1.0/24 VALID
+64511    172.16.0.0/16 VALID
+64510    10.0.0.0/8 INVALID
 ...
 ```
 
-#### 特定のASだけチェック
-指定されたASが広告していたprefixすべてについてROVしていきます。  
-例としてAS5745と63987について調べます。  
+### Verify specified AS's annoucing prefix
+
+Verify all prefixes annouced by specified AS(es).
+64511 and 64510 as examples.
 ```
-$ python3 roamon_verify_controller.py check -asns 5745 63987
+$ python3 roamon_verify_controller.py show -asn 64511 64510
 
-5745     192.93.148.0/24 VALID
-63987    194.57.0.0/16   VALID
-63987    192.54.175.0/24 INVALID
-63987    156.28.0.0/16   INVALID
-```
-
-#### 特定のIPアドレスだけチェック
-指定されたprefixに、経路広告されてる中でロンゲストマッチするprefixについてROVをします。
-
-`194.57.0.0/16`を含むprefixはROA登録できていることがわかります。
-```
-$ python3 roamon_verify_controller.py check -ips  194.57.0.0/16 192.93.148.0/24
-
-194.57.0.0/16   VALID
-192.93.148.0/24 INVALID
+64511    192.168.1.0/24 VALID
+64510    10.0.0.0/8 INVALID
 ```
 
-`194.57.0.0/16`より1bit大きい`194.56.0.0/15`は(広告されてないから)ROVに失敗します
+### Verify specified prefix(es)
+
+Verify longest-matched prefix in BGP routes with specified prefix.
 ```
-$ python3 roamon_verify_controller.py check -ips  194.57.0.0/20
+$ python3 roamon_verify_controller.py show -ip 192.168.1.0/24 10.0.0.0/8
 
-194.56.0.0/15   NOT_ADVERTISED
-```
-
-
-`194.57.0.0/16`より細かい`194.57.0.0/20`でも同じくROVに成功することがわかります。(`194.57.0.0/16`にロンゲストマッチするから)  
-(TODO: 指定されたprefixだけでなく, 経路広告されてる中でそれにロンゲストマッチしたprefix,この場合`194.57.0.0/16`も表示した方がいい？)
-```
-$ python3 roamon_verify_controller.py check -ips  194.57.0.0/20
-
-194.57.0.0/20   VALID
+192.168.1.0/24   VALID
+10.0.0.0/8   INVALID
 ```
 
-### 経路ハイジャック?を調べる
-**ここから下はあまり考えなくていいです。現時点ではそんなに必要ないし何を何のためにやってるか怪しくなったので。**
-
----
-
-指定されたASがROA登録したprefixが他のROA登録していないASに勝手に(同じかより小さいプレフィックスで)経路広告されていないかを調べます。  
-  
-Falseになっている場合、そのprefixをROA登録していない他のASが経路広告してしまっています。  
-ROAでOrigin ASの検証をしている組織でははじかれてしまうので対応が必要となります。
-
-#### 全てのASについてチェック
-デフォルトでは全てのASについてチェックします。  
-
-
-`調査したAS | 経路広告されてる中で、調査したASがROA登録してるprefixとロンゲストマッチしたprefix | 経路広告したAS ` 
+If shorter prefixes found from specified prefix(es) exist, it will be verified.
 ```
-$ python3 roamon_verify_controller.py check-violation 
+$ python3 roamon_verify_controller.py show -ip 172.16.1.0/20
 
-174 198.63.0.0/16 2914 False
-174 185.189.173.0/24 199727 True
-174 209.227.0.0/17 2914 False
-174 204.142.180.0/23 174 False
-174 167.160.15.0/24 174 False
-...
+172.16.1.0/15   NOT_ADVERTISED
 ```
 
-#### ASの指定
-AS番号を複数していできます。
+Thanks
 
-```
-$ python3 roamon_verify_controller.py check-violation  --asns 174
-
-174 198.63.0.0/16 2914 False
-174 185.189.173.0/24 199727 True
-174 209.227.0.0/17 2914 False
-174 204.142.180.0/23 174 False
-174 167.160.15.0/24 174 False
-...
-```
-
-#### IPアドレスの指定
-指定されたIPアドレスを経路広告していたASと、そのIPアドレスをROA登録していたASが同一かどうかを調べます
-(`python3 roamon_verify_controller.py check --ips`と似たようなもんだから必要ない？この辺よくわからなくなってきたので整理が必要...)
-```
-$ python3 roamon_verify_controller.py check-violation --ips 203.0.113.0/24 203.0.113.5
-
-203.0.113.0/24 False
-203.0.113.5 False
-```
-
+JPNIC roamon project is funded by Ministry of Internal Affairs and Communications, Japan (2019 Nov - 2020 Mar).
