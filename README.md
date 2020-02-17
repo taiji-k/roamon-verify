@@ -1,4 +1,4 @@
-Roamon-verify is developed and maintained by JPNIC.
+Roamon-verify is developed and maintained by JPNIC young dev team.
 
 ## Documentation
 
@@ -86,41 +86,38 @@ Announced prefixes by all AS in VRPs are 'ROV'ed by default.
 ```
 $ python3 roamon_verify_controller.py check
 
-2200    192.93.148.0/24 INVALID
-2200    194.57.0.0/16   VALID
-2200    192.54.175.0/24 INVALID
-2200    156.28.0.0/16   INVALID
+64511    192.168.1.0/24 VALID
+64511    172.16.0.0/16 VALID
+64510    10.0.0.0/8 INVALID
 ...
 ```
 
 ### Verify specified AS's annoucing prefix
 
 Verify all prefixes annouced by specified AS(es).
-5745 and 63987 as examples.
+64511 and 64510 as examples.
 ```
-$ python3 roamon_verify_controller.py check -asns 5745 63987
+$ python3 roamon_verify_controller.py check -asns 64511 64510
 
-5745     192.93.148.0/24 VALID
-63987    194.57.0.0/16   VALID
-63987    192.54.175.0/24 INVALID
-63987    156.28.0.0/16   INVALID
+64511    192.168.1.0/24 VALID
+64510    10.0.0.0/8 INVALID
 ```
 
 ### Verify specified prefix(es)
 
 Verify longest-matched prefix in BGP routes with specified prefix.
 ```
-$ python3 roamon_verify_controller.py check -ips  194.57.0.0/16 192.93.148.0/24
+$ python3 roamon_verify_controller.py check -ips 192.168.1.0/24 10.0.0.0/8
 
-194.57.0.0/16   VALID
-192.93.148.0/24 INVALID
+192.168.1.0/24   VALID
+10.0.0.0/8   INVALID
 ```
 
 If shorter prefixes found from specified prefix(es) exist, it will be verified.
 ```
-$ python3 roamon_verify_controller.py check -ips  194.57.0.0/20
+$ python3 roamon_verify_controller.py check -ips 172.16.1.0/20
 
-194.56.0.0/15   NOT_ADVERTISED
+172.16.1.0/15   NOT_ADVERTISED
 ```
 
 Thanks
