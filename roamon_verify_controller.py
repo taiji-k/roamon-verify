@@ -44,14 +44,14 @@ def command_check(args):
     data = roamon_verify_checker.load_all_data(file_path_vrps, file_path_rib)
 
     # オプション指定されてる場合はそれをやる
-    if args.asns is not None:
-        roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asns)
-    if args.ips is not None:
-        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ips)
+    if args.asn is not None:
+        roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asn)
+    if args.ip is not None:
+        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ip)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
-    if args.all_asns == True or (args.ips is None and args.asns is None):
+    if args.all_asn == True or (args.ip is None and args.asn is None):
         roamon_verify_checker.check_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
@@ -59,14 +59,14 @@ def command_check_violation(args):
     data = roamon_verify_checker.load_all_data(file_path_vrps, file_path_rib)
 
     # オプション指定されてる場合はそれをやる
-    if args.asns is not None:
-        roamon_verify_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asns)
-    if args.ips is not None:
-        roamon_verify_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ips)
+    if args.asn is not None:
+        roamon_verify_checker.check_violation_specified_asns(data["vrps"], data["rib"], args.asn)
+    if args.ip is not None:
+        roamon_verify_checker.check_violation_specified_ips(data["vrps"], data["rib"], args.ip)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
-    if args.all_asns == True or (args.ips is None and args.asns is None):
+    if args.all_asn == True or (args.ip is None and args.asn is None):
         roamon_verify_checker.check_violation_all_asn_in_vrps(data["vrps"], data["rib"])
 
 
@@ -76,7 +76,7 @@ def command_help(args):
 
 
 # コマンドラインパーサーを作成
-parser = argparse.ArgumentParser(description='ROA - BGP Diff command !')
+parser = argparse.ArgumentParser(description='ROA - BGP rov command !')
 subparsers = parser.add_subparsers()
 
 # get コマンドの parser を作成
@@ -87,18 +87,18 @@ parser_add.add_argument('--bgp', action='store_true', help='specify retrieve typ
 # parser_add.add_argument('-p', '--path', default="/tmp", help='specify data dirctory')
 parser_add.set_defaults(handler=command_get)
 
-# check コマンドの parser を作成
-parser_commit = subparsers.add_parser('check', help="see `get -h`. It's command to check route.")
-parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
-parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
-parser_commit.add_argument('--ips', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
+# rov コマンドの parser を作成
+parser_commit = subparsers.add_parser('rov', help="see `get -h`. It's command to check route.")
+parser_commit.add_argument('--all-asn', nargs='*', help='check ALL ASNs (default)')
+parser_commit.add_argument('--asn', nargs='*', help='specify target ASNs (default: ALL)')
+parser_commit.add_argument('--ip', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
 parser_commit.set_defaults(handler=command_check)
 
-# check-violationコマンドのパーサ
-parser_commit = subparsers.add_parser('check-violation', help="see `get -h`. It's command to check route hijack.")
-parser_commit.add_argument('--all-asns', nargs='*', help='check ALL ASNs (default)')
-parser_commit.add_argument('--asns', nargs='*', help='specify target ASNs (default: ALL)')
-parser_commit.add_argument('--ips', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
+# only-invalidコマンドのパーサ
+parser_commit = subparsers.add_parser('only-invalid', help="see `get -h`. It's command to validate route origin.")
+parser_commit.add_argument('--all-asn', nargs='*', help='check ALL ASNs (default)')
+parser_commit.add_argument('--asn', nargs='*', help='specify target ASNs (default: ALL)')
+parser_commit.add_argument('--ip', nargs='*', help='specify target IPs such as 203.0.113.0/24 or 203.0.113.5.')
 parser_commit.set_defaults(handler=command_check_violation)
 
 # help コマンドの parser を作成
