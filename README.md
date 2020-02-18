@@ -18,6 +18,8 @@ To install required packages:
 $ pip3 install netaddr pyfiglet tqdm pyasn beautifulsoup4 requests
 ```
 
+It needs to install the [routinator](https://github.com/NLnetLabs/routinator). Follow the instruction in the README of the "routinator".
+
 ### When putting in Vagrant
 
 To clone from repository:
@@ -68,6 +70,16 @@ It needs several minutes.
 $ python3 roamon_verify_controller.py get --all
 ```
 
+If you want to get only BGP data, use `--bgp` option.
+```
+$ python3 roamon_verify_controller.py get --bgp
+```
+
+If you want to get only Verified ROA data, use `--roa` option.
+```
+$ python3 roamon_verify_controller.py get --roa
+```
+
 ### VRPs and ROV
 
 By comparing VRPs (Verified ROA Payloads) with BGP routes, difference will be checked as ROV (Route Origin Validation).
@@ -83,7 +95,7 @@ To see results:
 Announced prefixes by all AS in VRPs are 'ROV'ed by default.
 
 ```
-$ python3 roamon_verify_controller.py show
+$ python3 roamon_verify_controller.py rov
 
 64511    192.168.1.0/24 VALID
 64511    172.16.0.0/16 VALID
@@ -96,7 +108,7 @@ $ python3 roamon_verify_controller.py show
 Verify all prefixes annouced by specified AS(es).
 64511 and 64510 as examples.
 ```
-$ python3 roamon_verify_controller.py show -asn 64511 64510
+$ python3 roamon_verify_controller.py rov -asn 64511 64510
 
 64511    192.168.1.0/24 VALID
 64510    10.0.0.0/8 INVALID
@@ -106,7 +118,7 @@ $ python3 roamon_verify_controller.py show -asn 64511 64510
 
 Verify longest-matched prefix in BGP routes with specified prefix.
 ```
-$ python3 roamon_verify_controller.py show -ip 192.168.1.0/24 10.0.0.0/8
+$ python3 roamon_verify_controller.py rov -ip 192.168.1.0/24 10.0.0.0/8
 
 192.168.1.0/24   VALID
 10.0.0.0/8   INVALID
@@ -114,7 +126,7 @@ $ python3 roamon_verify_controller.py show -ip 192.168.1.0/24 10.0.0.0/8
 
 If shorter prefixes found from specified prefix(es) exist, it will be verified.
 ```
-$ python3 roamon_verify_controller.py show -ip 172.16.1.0/20
+$ python3 roamon_verify_controller.py rov -ip 172.16.1.0/20
 
 172.16.1.0/15   NOT_ADVERTISED
 ```
