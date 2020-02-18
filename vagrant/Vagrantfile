@@ -92,9 +92,6 @@ Vagrant.configure("2") do |config|
     cargo install routinator
     routinator init --accept-arin-rpa
 
-    ########
-    ## YOU SHOULD CHANGE HERE!
-    ########
-    git clone $( echo https://USERNAME:PASSWORD@github.com/taiji-k/roamon-verify.git )
+    git clone https://github.com/taiji-k/roamon-verify.git
   SHELL
 end
