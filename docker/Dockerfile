@@ -34,7 +34,5 @@ RUN /bin/bash -c "source ~/.cargo/env ; cargo install routinator"
 RUN /bin/bash -c "source ~/.cargo/env ; routinator init --accept-arin-rpa"
 
 
-######
-## YOU SHOULD CHANGE THIS VAL!
-######
-RUN git clone "https://USERNAME:PASSWORD@github.com/taiji-k/roamon.git"
+
+RUN git clone "https://github.com/taiji-k/roamon.git"
