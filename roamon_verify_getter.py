@@ -39,11 +39,11 @@ logger = logging.getLogger(__name__)
 # 最新のRIBファイルをダウンロードするためのURLを得る (pyasnに同じ機能あったからいまは使わない)
 def get_latest_rib_url():
     # 年月が名前となったディレクトリ一覧を、最終更新順に並べたページを取得
-    payload = {"C": "M", "O": "D"} # 最終更新(MOD)で降順(DESC)に並び替え
+    payload = {"C": "M", "O": "D"}  # 最終更新(MOD)で降順(DESC)に並び替え
     base_url = 'http://archive.routeviews.org/bgpdata/'
     month_list_res = requests.get(base_url, params=payload)
 
-    #　最終更新が一番あとのディレクトリの名前を取得("2020.1/"とか)
+    # 　最終更新が一番あとのディレクトリの名前を取得("2020.1/"とか)
     soup_month_list = bs4.BeautifulSoup(month_list_res.text, "html.parser")
     latest_month_row = soup_month_list.select("tr")[3]
     latest_month = latest_month_row.a.get("href")
@@ -53,11 +53,11 @@ def get_latest_rib_url():
     ribs_in_month_url = urllib.parse.urljoin(month_url, "RIBS/")
 
     # RIBSディレクトリの中にあるファイルを最終更新順に並べたページを取得
-    payload = {"C": "M", "O": "D"} # 最終更新(MOD)で降順(DESC)に並び替え
+    payload = {"C": "M", "O": "D"}  # 最終更新(MOD)で降順(DESC)に並び替え
     ribs_list_res = requests.get(ribs_in_month_url, params=payload)
     soup_ribs_list = bs4.BeautifulSoup(ribs_list_res.text, "html.parser")
     # 最新のファイル名を取得
-    latest_rib_file_name =soup_ribs_list.select("tr")[3].a.get("href")
+    latest_rib_file_name = soup_ribs_list.select("tr")[3].a.get("href")
 
     # 最新のファイルをダウンロードするURLを生成
     latest_rib_download_url = urllib.parse.urljoin(ribs_in_month_url, latest_rib_file_name)
@@ -91,7 +91,8 @@ def fetch_rib_data(dir_path_data, file_path_ipasndb):
     logger.debug("start parse RIB data")
     # pyasnの機能でRIBファイルをパースしてpyasnが読める形式に変換する
     subprocess.check_output("pyasn_util_convert.py --single {} {}".format(download_file_path, file_path_ipasndb),
-        shell=True)
+                            shell=True)
+
 
 # ↓めんどくさいからShellScriptワンライナーで対応することにしました
 # # VRPsのCSVから、pyasnが読み込める形式に変換する

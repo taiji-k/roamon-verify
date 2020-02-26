@@ -1,17 +1,17 @@
 # encoding: UTF-8
 
 # Copyright (c) 2019-2020 Japan Network Information Center ("JPNIC")
-# 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute and/or sublicense of
 # the Software, and to permit persons to whom the Software is furnished to do
 # so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -67,7 +67,7 @@ def command_check(args):
     if args.asn is not None:
         roamon_verify_checker.check_specified_asns(data["vrps"], data["rib"], args.asn)
     if args.ip is not None:
-        roamon_verify_checker.check_specified_ips(data["vrps"], data["rib"], args.ip)
+        roamon_verify_checker.check_specified_prefixes(data["vrps"], data["rib"], args.ip)
 
     # なんのオプションも指定されてないとき
     # (argparseはオプションのなかのハイフンをアンダーバーに置き換える。(all-asnsだとall引くasnsだと評価されるため))
@@ -100,7 +100,7 @@ parser = argparse.ArgumentParser(description='ROA - BGP rov command !')
 subparsers = parser.add_subparsers()
 
 # get コマンドの parser を作成
-parser_add = subparsers.add_parser('get', help="see `get -h`. It's command to fetch data." )
+parser_add = subparsers.add_parser('get', help="see `get -h`. It's command to fetch data.")
 parser_add.add_argument('--all', action='store_true', help='specify retrieve type ALL (default)')
 parser_add.add_argument('--roa', action='store_true', help='specify retrieve type only ROA')
 parser_add.add_argument('--bgp', action='store_true', help='specify retrieve type only BGP')
