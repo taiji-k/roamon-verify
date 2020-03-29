@@ -32,6 +32,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 #RUN source ~/.cargo/env
 RUN /bin/bash -c "source ~/.cargo/env ; cargo install routinator"
 RUN /bin/bash -c "source ~/.cargo/env ; routinator init --accept-arin-rpa"
+RUN /bin/bash -c "echo ~/.cargo/env >> ~/.bashrc"
 
 
 
