@@ -108,7 +108,7 @@ $ python3 roamon_verify_controller.py rov
 Verify all prefixes annouced by specified AS(es).
 64511 and 64510 as examples.
 ```
-$ python3 roamon_verify_controller.py rov -asn 64511 64510
+$ python3 roamon_verify_controller.py rov --asn 64511 64510
 
 64511    192.168.1.0/24 VALID
 64510    10.0.0.0/8 INVALID
@@ -118,7 +118,7 @@ $ python3 roamon_verify_controller.py rov -asn 64511 64510
 
 Verify longest-matched prefix in BGP routes with specified prefix.
 ```
-$ python3 roamon_verify_controller.py rov -ip 192.168.1.0/24 10.0.0.0/8
+$ python3 roamon_verify_controller.py rov --ip 192.168.1.0/24 10.0.0.0/8
 
 192.168.1.0/24   VALID
 10.0.0.0/8   INVALID
@@ -126,7 +126,7 @@ $ python3 roamon_verify_controller.py rov -ip 192.168.1.0/24 10.0.0.0/8
 
 If shorter prefixes found from specified prefix(es) exist, it will be verified.
 ```
-$ python3 roamon_verify_controller.py rov -ip 172.16.1.0/20
+$ python3 roamon_verify_controller.py rov --ip 172.16.1.0/20
 
 172.16.1.0/15   NOT_ADVERTISED
 ```
