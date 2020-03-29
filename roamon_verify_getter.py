@@ -36,31 +36,48 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-# 最新のRIBファイルをダウンロードするためのURLを得る (pyasnに同じ機能あったからいまは使わない)
-def get_latest_rib_url():
-    # 年月が名前となったディレクトリ一覧を、最終更新順に並べたページを取得
-    payload = {"C": "M", "O": "D"}  # 最終更新(MOD)で降順(DESC)に並び替え
-    base_url = 'http://archive.routeviews.org/bgpdata/'
-    month_list_res = requests.get(base_url, params=payload)
-
-    # 　最終更新が一番あとのディレクトリの名前を取得("2020.1/"とか)
-    soup_month_list = bs4.BeautifulSoup(month_list_res.text, "html.parser")
-    latest_month_row = soup_month_list.select("tr")[3]
-    latest_month = latest_month_row.a.get("href")
-
-    # 上で得たディレクトリの中のRIBSディレクトリへアクセスするURLを生成 ("2020.1/RIBS/")
-    month_url = urllib.parse.urljoin(base_url, latest_month)
+def _get_latest_rib_url_in_month(base_url, month):
+    # 上で得たディレクトリの中のRIBSディレクトリへアクセスするURLを生成 (例: "2020.1/RIBS/")
+    month_url = urllib.parse.urljoin(base_url, month)
     ribs_in_month_url = urllib.parse.urljoin(month_url, "RIBS/")
 
     # RIBSディレクトリの中にあるファイルを最終更新順に並べたページを取得
     payload = {"C": "M", "O": "D"}  # 最終更新(MOD)で降順(DESC)に並び替え
     ribs_list_res = requests.get(ribs_in_month_url, params=payload)
     soup_ribs_list = bs4.BeautifulSoup(ribs_list_res.text, "html.parser")
+    
     # 最新のファイル名を取得
-    latest_rib_file_name = soup_ribs_list.select("tr")[3].a.get("href")
+    latest_rib_a_tag = soup_ribs_list.select("tr")[3].a
+    # (最新の月のディレクトリが空なことがある)
+    if latest_rib_a_tag is None:
+        return None
+    else:
+        latest_rib_file_name = latest_rib_a_tag.get("href")
+        latest_rib_download_url = urllib.parse.urljoin(ribs_in_month_url, latest_rib_file_name)
+        return latest_rib_download_url
 
-    # 最新のファイルをダウンロードするURLを生成
-    latest_rib_download_url = urllib.parse.urljoin(ribs_in_month_url, latest_rib_file_name)
+
+# 最新のRIBファイルをダウンロードするためのURLを得る (pyasnに同じ機能はある)
+def get_latest_rib_url():
+    # 年月が名前となったディレクトリ一覧を、最終更新順に並べたページを取得
+    payload = {"C": "M", "O": "D"}  # 最終更新(MOD)で降順(DESC)に並び替え
+    base_url = 'http://archive.routeviews.org/bgpdata/'
+    month_list_res = requests.get(base_url, params=payload)
+
+    # 最終更新が一番あとのディレクトリの名前を取得("2020.1/"とか)
+    soup_month_list = bs4.BeautifulSoup(month_list_res.text, "html.parser")
+    latest_month_row = soup_month_list.select("tr")[3]
+    latest_month = latest_month_row.a.get("href")
+
+    # その月の中で最新のRIBファイルのURLを取得
+    latest_rib_download_url = _get_latest_rib_url_in_month(base_url, latest_month)
+
+    # 最新の月のディレクトリが空なことがある。そのときは1つ前のディレクトリの中を探す
+    if latest_rib_download_url is None:
+        second_latest_month_row =  soup_month_list.select("tr")[4]
+        second_latest_month = second_latest_month_row.a.get("href")
+        latest_rib_download_url = _get_latest_rib_url_in_month(base_url, second_latest_month)
+
     return latest_rib_download_url
 
 
