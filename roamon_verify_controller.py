@@ -31,7 +31,6 @@ from pyfiglet import Figlet
 import configparser
 
 # ログ関係の設定 (適当)
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # コンフィグファイルのロード
