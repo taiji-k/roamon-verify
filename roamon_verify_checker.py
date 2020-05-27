@@ -28,7 +28,6 @@ import pyasn
 import ipaddress
 from enum import Enum
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 

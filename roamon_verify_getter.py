@@ -32,7 +32,6 @@ import urllib.parse
 from urllib.parse import urlparse
 
 # ログ関係の設定 (適当)
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
