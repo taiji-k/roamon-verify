@@ -122,23 +122,24 @@ def rov(vrps, rib, specified_prefix):
     # 経路広告されてなかったならここで終了
     does_exist_in_rib = ip_lookup_result_rib is not None
     if not does_exist_in_rib:
-        logger.debug("ASN doesn't exist in RIB")
+        logger.debug("The spefied prefix doesn't exist in RIB.")
         return PrefixRovResultStruct(specified_prefix, None, None, RovResult.NOT_ADVERTISED)
+
+    # Lookup spedified prefix in vrps
+    specified_prefix_parsed = ipaddress.ip_network(specified_prefix)
+    matched_in_vrps = vrps.radix.search_best(str(specified_prefix_parsed.network_address), specified_prefix_parsed.prefixlen)
+    if matched_in_vrps is None:
+        logger.debug("{} is not matched in VRPs.".format(specified_prefix))
+        return PrefixRovResultStruct(specified_prefix, None, None, RovResult.NOT_FOUND)
 
     # ロンゲストマッチしたprefixと、それを広告してたASNを取り出す
     advertising_asn = ip_lookup_result_rib.asn
     matched_advertised_prefix = ip_lookup_result_rib.prefix
 
+    #logger.debug("target_prefix: {}".format(matched_advertised_prefix))
+
     # TODO: pyasnのget_as_prefixes()はget_as_prefixes_effective()とどう違う？帰ってくるのがsetとlistという違いがあるが...
     prefix_list_in_vrps = vrps.get_as_prefixes(advertising_asn)
-    does_exist_in_vrps = prefix_list_in_vrps is not None
-
-    # ロンゲストマッチしたprefixを広告していたASNが、ROAに登録されてなかった場合はここで終了
-    if not does_exist_in_vrps:
-        logger.debug("ASN doesn't exist in VRPs")
-        return PrefixRovResultStruct(specified_prefix, matched_advertised_prefix, advertising_asn, RovResult.NOT_FOUND)
-
-    # logger.debug("target_prefix: {}".format(matched_advertised_prefix))
 
     # ROAに登録されてるプレフィックスは、BGP経路情報の上で、指定されたprefixにロンゲストマッチしたprefixをカバーできているか調べる
     # RIBのエントリのprefixは、必ずROA登録されてるprefixよりも小さいはず。(割り当て時より細分化して広告されることはあっても逆はないはず)
